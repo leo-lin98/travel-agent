@@ -1,0 +1,5 @@
+{
+  "kind": "no_feasible_result",
+  "message": "I couldn't find an itinerary that fits your time and JPY 3000 budget.",
+  "retry_question": "Would you like me to try again?"
+}

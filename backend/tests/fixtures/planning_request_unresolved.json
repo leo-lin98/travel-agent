@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "gap": {
+    "start_time": "2026-11-20T15:45:00+09:00",
+    "start_location": {
+      "label": "Synthetic Shibuya start point",
+      "latitude": 35.658,
+      "longitude": 139.7016,
+      "place_id": null
+    }
+  },
+  "commitment": {
+    "location": {
+      "label": "Synthetic Ginza dinner venue",
+      "latitude": 35.6717,
+      "longitude": 139.765,
+      "place_id": "ChIJsyntheticGinzaDinner0001"
+    },
+    "time": null,
+    "timezone": "Asia/Tokyo"
+  },
+  "budget": {
+    "amount": "5000",
+    "currency": null
+  },
+  "transport_modes": [],
+  "constraints": [],
+  "unresolved_questions": [
+    {"topic": "commitment_time", "question": "What time is your dinner reservation?"},
+    {"topic": "budget_currency", "question": "Which currency is your 5000 budget in?"}
+  ]
+}

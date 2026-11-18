@@ -1,0 +1,31 @@
+{
+  "candidate_id": "cand-garden-cafe",
+  "stops": [
+    {
+      "place_id": "ChIJsyntheticGardenMuseum0001",
+      "label": "Synthetic Garden Museum",
+      "latitude": 35.6764,
+      "longitude": 139.6993,
+      "visit_minutes": 60,
+      "evidence_ids": ["ev-garden-hours", "ev-garden-duration", "ev-garden-constraint", "ev-evening-rain"]
+    },
+    {
+      "place_id": "ChIJsyntheticKissaCafe00001",
+      "label": "Synthetic Kissa Cafe",
+      "latitude": 35.6654,
+      "longitude": 139.7121,
+      "visit_minutes": 45,
+      "evidence_ids": ["ev-cafe-hours", "ev-cafe-duration", "ev-cafe-constraint"]
+    }
+  ],
+  "legs": [
+    {"mode": "walking", "duration_minutes": 25, "distance_meters": 1900, "transfers": [], "evidence_ids": []},
+    {"mode": "walking", "duration_minutes": 20, "distance_meters": 1600, "transfers": [], "evidence_ids": []},
+    {"mode": "public_transit", "duration_minutes": 30, "distance_meters": 5200, "transfers": [{"available_minutes": 6, "walk_minutes": 4}], "evidence_ids": ["ev-transit-fare"]}
+  ],
+  "costs": [
+    {"description": "Garden museum admission", "amount": {"amount": "1000", "currency": "JPY"}, "evidence_ids": ["ev-garden-admission"]},
+    {"description": "Coffee", "amount": {"amount": "900", "currency": "JPY"}, "evidence_ids": ["ev-cafe-price"]},
+    {"description": "Metro fare to Ginza", "amount": {"amount": "180", "currency": "JPY"}, "evidence_ids": ["ev-transit-fare"]}
+  ]
+}

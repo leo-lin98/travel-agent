@@ -1,0 +1,175 @@
+[
+  {
+    "case_id": "live-singapore-several-activities-budget",
+    "requirement_ids": ["R2", "R13"],
+    "now": "2027-01-12T12:00:00+08:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Raffles Place MRT and free now until a 7pm dinner at Clarke Quay. I'd like to fit in a garden, a hawker centre snack, and a museum. MRT is fine, and I have 120 Singapore dollars for everything."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Each option may chain several activities, and the summed total of all transit, food, and admission across them, including labeled estimates, is at or below SGD 120."
+  },
+  {
+    "case_id": "live-vienna-currency-symbol-budget",
+    "requirement_ids": ["R13"],
+    "now": "2027-01-13T11:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Wien Hauptbahnhof and free now until a 3pm meeting at Stephansplatz. Tram or U-Bahn. Keep it under €25."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The currency is given by symbol, so it is established and the agent should not ask for it. Every option's total is at or below EUR 25."
+  },
+  {
+    "case_id": "live-seoul-later-gap-with-budget",
+    "requirement_ids": ["R1", "R13"],
+    "now": "2027-01-14T09:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'll be at Seoul Station from 1pm, after my morning train arrives. Then I'm free until a 6pm dinner in Hongdae. Subway please, and keep it under 50,000 won."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The gap starts at 1 PM, not now, and a KRW cap applies. No option schedules anything before 1 PM, and every total is at or below KRW 50,000."
+  },
+  {
+    "case_id": "live-fuji-official-closure-over-maps",
+    "requirement_ids": ["R9", "R14"],
+    "now": "2027-01-15T08:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Kawaguchiko Station and free now until a 5pm dinner near the station. I only want to hike up the Yoshida Trail on Mount Fuji. Bus or taxi is fine."
+    ],
+    "expected_outcome": "no_feasible_result",
+    "notes": "Mount Fuji's official climbing season is summer, and official notices close the summit trails in winter even if a map listing suggests open access. The official source wins, so the trail is rejected; as the only requested activity, the result is no feasible result with a retry question that may offer alternatives. Re-check the official notice before relying on this case live."
+  },
+  {
+    "case_id": "live-mexico-city-cancel-activity",
+    "requirement_ids": ["R11"],
+    "now": "2027-01-16T11:00:00-06:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at the Zocalo in Mexico City and free now until a 5pm meeting in Condesa. I'd like to see Templo Mayor and then have tacos. Metro or walking.",
+      "Actually, drop Templo Mayor. Just the tacos and maybe a walk through a park."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The revision removes one requested activity. Revised options must not include Templo Mayor, keep the start, commitment, and transport unchanged, and are fully rechecked."
+  },
+  {
+    "case_id": "live-chicago-stop-inside-another-place",
+    "requirement_ids": ["R9"],
+    "now": "2027-01-18T11:00:00-06:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Union Station in Chicago, free now until a 4pm meeting at the Willis Tower. I want lunch at Terzo Piano, the restaurant inside the Art Institute. Walking or the L is fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The requested stop is a restaurant inside a museum. Its own opening hours for the visit must be verified; the museum's hours alone do not establish that the restaurant is open. The restaurant's existence and lunch service are from memory; re-check its official site before relying on this case live."
+  },
+  {
+    "case_id": "live-bangkok-commitment-moves-district",
+    "requirement_ids": ["R11"],
+    "now": "2027-01-19T13:00:00+07:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at the Grand Palace and free now until a 7pm dinner in Sukhumvit. BTS, MRT, or taxi is fine.",
+      "My dinner just moved to Silom, same time. Can you update the plan?"
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The revision moves the commitment to another district. Every revised option's final leg ends in Silom and arrives by 6:45 PM; research for stops that still fit can be kept rather than redone."
+  },
+  {
+    "case_id": "live-vancouver-stated-start-overrides-device",
+    "requirement_ids": ["R6"],
+    "now": "2027-01-20T10:30:00-08:00",
+    "device_location": {
+      "label": "Device location near Vancouver International Airport",
+      "latitude": 49.1947,
+      "longitude": -123.1792,
+      "place_id": null
+    },
+    "user_messages": [
+      "Ignore where my phone says I am, I'm actually starting from Granville Island at 11am. I'm free until a 3pm meeting at Canada Place. Bus or walking."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The user states a start that differs from the shared device location. Every option starts from Granville Island, not the airport."
+  },
+  {
+    "case_id": "live-sydney-mixed-input-answers-time",
+    "requirement_ids": ["R3", "R1"],
+    "now": "2027-01-21T12:00:00+11:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Central Station in Sydney and free now. I have drinks with friends in Darling Harbour later. Train or walking is fine.",
+      "uh it's at seven thirty tonight"
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The first typed turn leaves the commitment time unset; the second turn is a transcribed spoken answer. The agent treats it like typed input and plans for 7:30 PM, keeping the earlier details."
+  },
+  {
+    "case_id": "live-berlin-user-waives-buffer",
+    "requirement_ids": ["R8"],
+    "now": "2027-01-22T14:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Alexanderplatz, free now until a 6pm concert at the Berliner Philharmonie. Don't worry about getting there early, I'm fine arriving right at 6. S-Bahn or U-Bahn."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The arrival buffer is a firm product constraint. Every option still arrives by 5:45 PM even though the user offers to arrive at 6."
+  },
+  {
+    "case_id": "live-istanbul-user-sets-visit-length",
+    "requirement_ids": ["R10"],
+    "now": "2027-01-23T10:00:00+03:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm in Taksim Square and free now until a 3pm meeting in Besiktas. I want to see Dolmabahce Palace properly, at least two hours there. Tram, funicular, or taxi."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The user sets a minimum visit length for one stop. Every option that includes the palace schedules at least two hours there, and other stops still use researched durations. 2027-01-23 is a Saturday; the palace's opening days and hours are from memory, so re-check its official site before relying on this case live."
+  },
+  {
+    "case_id": "live-cape-town-conditional-mode",
+    "requirement_ids": ["R7"],
+    "now": "2027-01-25T10:00:00+02:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at the V&A Waterfront in Cape Town, free now until a 3pm meeting on Long Street. I'll walk any leg under 20 minutes and take a taxi for anything longer."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The user mixes modes by a rule. Legs that walk more than 20 minutes are not offered as walking; longer legs use taxi with driving-based time and labeled fare estimates."
+  },
+  {
+    "case_id": "live-paris-gap-starts-after-commitment",
+    "requirement_ids": ["R1"],
+    "now": "2027-01-27T10:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'll be at the Louvre and free from 4pm. I have a guided tour booked at the Musee d'Orsay at 3pm. Metro or walking. What can I do in between?"
+    ],
+    "expected_outcome": "clarification",
+    "notes": "The gap start (4 PM) is after the commitment (3 PM), so the times contradict each other. The agent must ask which time is wrong rather than guessing or planning around either."
+  },
+  {
+    "case_id": "live-london-ambiguous-airport-start",
+    "requirement_ids": ["R1", "R6"],
+    "now": "2027-01-28T11:00:00+00:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at the airport in London and free now until a 5pm meeting at Tate Modern. Train or taxi is fine."
+    ],
+    "expected_outcome": "clarification",
+    "notes": "London has several airports, so the starting location is unclear. With no device location, the agent must ask which airport rather than picking one."
+  },
+  {
+    "case_id": "live-hanoi-local-script-names",
+    "requirement_ids": ["R12"],
+    "now": "2027-01-26T13:00:00+07:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Hồ Hoàn Kiếm and free now until a 6pm dinner in Tây Hồ. Taxi or walking is fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "A Southeast Asian location given with Vietnamese diacritics. The agent resolves the names and plans normally without restricting the region, and anything it cannot verify is not presented as verified."
+  }
+]

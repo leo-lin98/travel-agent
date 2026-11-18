@@ -1,0 +1,23 @@
+{
+  "candidate_id": "cand-late-transfer",
+  "failures": [
+    {
+      "constraint": "arrival_buffer",
+      "message": "Arrival at 18:50 is after the 18:45 cutoff (15 minutes before the 19:00 commitment). Remove a stop, shorten a visit, or choose faster travel.",
+      "inputs": {
+        "arrival_at_commitment": "2026-11-20T18:50:00+09:00",
+        "latest_allowed_arrival": "2026-11-20T18:45:00+09:00",
+        "commitment_time": "2026-11-20T19:00:00+09:00"
+      }
+    },
+    {
+      "constraint": "transfer_time",
+      "message": "Leg 3 allows 3 minutes for a transfer walk that takes 10 minutes. Choose a later connection or a different route.",
+      "inputs": {
+        "leg_index": "2",
+        "available_minutes": "3",
+        "required_walk_minutes": "10"
+      }
+    }
+  ]
+}
