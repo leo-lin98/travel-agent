@@ -31,8 +31,7 @@
           ],
           "costs": [
             {"description": "Garden museum admission", "amount": {"amount": "1000", "currency": "JPY"}, "evidence_ids": ["ev-garden-admission"]},
-            {"description": "Coffee", "amount": {"amount": "900", "currency": "JPY"}, "evidence_ids": ["ev-cafe-price"]},
-            {"description": "Metro fare to Ginza", "amount": {"amount": "180", "currency": "JPY"}, "evidence_ids": ["ev-transit-fare"]}
+            {"description": "Coffee", "amount": {"amount": "900", "currency": "JPY"}, "evidence_ids": ["ev-cafe-price"]}
           ]
         },
         "leave_by": ["2026-11-20T15:45:00+09:00", "2026-11-20T17:10:00+09:00", "2026-11-20T18:15:00+09:00"],

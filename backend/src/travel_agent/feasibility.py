@@ -279,16 +279,29 @@ def _cited_ids(candidate: CandidateItinerary) -> tuple[str, ...]:
     return tuple(dict.fromkeys(evidence_id for group in groups for evidence_id in group))
 
 
+def _grounded(item: Evidence, sourced_ids: frozenset[str]) -> bool:
+    """True for a sourced finding, or an estimate based only on existing sourced findings.
+
+    A bare AI best guess (empty ``based_on``) never counts (decision 2026-11-18).
+    """
+    if isinstance(item, SourcedFinding):
+        return True
+    return bool(item.based_on) and all(i in sourced_ids for i in item.based_on)
+
+
 def _check_explicit_constraints(
     constraints: tuple[str, ...],
     cited: tuple[Evidence, ...],
+    sourced_ids: frozenset[str],
     context: _Context,
 ) -> tuple[ConstraintFailure, ...]:
-    """Each request constraint has cited, applicable supporting evidence (O1)."""
+    """Each request constraint has cited, applicable, grounded supporting evidence (O1)."""
     supported = frozenset(
         item.claim.constraint_index
         for item in cited
-        if isinstance(item.claim, ConstraintClaim) and _applies_to_plan(item, context)
+        if isinstance(item.claim, ConstraintClaim)
+        and _applies_to_plan(item, context)
+        and _grounded(item, sourced_ids)
     )
     return tuple(
         _failure(
@@ -523,6 +536,37 @@ def _check_cost_item(
 
 
 @dataclass(frozen=True)
+class _TransitFare:
+    """One transit leg's fare and whether only estimates support it."""
+
+    fare: Money
+    is_estimate: bool
+
+
+def _check_transit_leg(
+    leg_index: int, leg: TravelLeg, by_id: dict[str, Evidence], context: _Context
+) -> ConstraintFailure | _TransitFare:
+    """Return a failure, or the one distinct fare the leg itself cites (R13)."""
+    items = tuple(
+        item
+        for item in (by_id[i] for i in leg.evidence_ids if i in by_id)
+        if isinstance(item.claim, CostAmountClaim) and _applies_to_plan(item, context)
+    )
+    amounts = frozenset(
+        item.claim.amount for item in items if isinstance(item.claim, CostAmountClaim)
+    )
+    if len(amounts) != 1:
+        reason = "no_transit_fare" if not amounts else "conflicting_transit_fares"
+        return _failure(
+            ConstraintId.MISSING_EVIDENCE,
+            "A transit leg must cite exactly one current fare.",
+            {"reason": reason, "leg_index": str(leg_index)},
+        )
+    (fare,) = amounts
+    return _TransitFare(fare=fare, is_estimate=all(isinstance(item, Estimate) for item in items))
+
+
+@dataclass(frozen=True)
 class _TaxiPrice:
     """The price part of a taxi rate; validity dates only decide applicability (RC12)."""
 
@@ -603,19 +647,28 @@ def _check_costs(
     item_results = tuple(
         _check_cost_item(index, cost, by_id, context) for index, cost in enumerate(candidate.costs)
     )
+    transit_results = tuple(
+        _check_transit_leg(index, leg, by_id, context)
+        for index, leg in enumerate(candidate.legs)
+        if leg.mode == TransportMode.PUBLIC_TRANSIT
+    )
+    transit_fares = tuple(result for result in transit_results if isinstance(result, _TransitFare))
     taxi_legs = tuple(leg for leg in candidate.legs if leg.mode == TransportMode.TAXI_RIDESHARE)
     prices = _taxi_prices(evidence, context) if taxi_legs else frozenset[_TaxiPrice]()
     seen = _seen_currencies(
         frozenset(
             {cost.amount.currency for cost in candidate.costs}
             | {price.base_fare.currency for price in prices}
+            | {result.fare.currency for result in transit_fares}
         ),
         context.budget,
     )
+    has_priced_item = bool(candidate.costs or taxi_legs or transit_results)
     failures = (
         *(result for result in item_results if isinstance(result, ConstraintFailure)),
+        *(result for result in transit_results if isinstance(result, ConstraintFailure)),
         *_check_taxi_legs(candidate.legs, prices),
-        *_check_currency(seen, bool(candidate.costs or taxi_legs), context.budget),
+        *_check_currency(seen, has_priced_item, context.budget),
     )
     if failures:
         return _CostOutcome(tuple(failures), None, False)
@@ -623,10 +676,16 @@ def _check_costs(
     # price whenever taxi legs exist.
     (currency,) = seen
     fares = tuple(_taxi_fare(price, leg.distance_meters) for price in prices for leg in taxi_legs)
-    amount = sum((cost.amount.amount for cost in candidate.costs), Decimal(0)) + sum(
-        fares, Decimal(0)
+    amount = (
+        sum((cost.amount.amount for cost in candidate.costs), Decimal(0))
+        + sum(fares, Decimal(0))
+        + sum((result.fare.amount for result in transit_fares), Decimal(0))
     )
-    includes_estimates = bool(taxi_legs) or any(result is True for result in item_results)
+    includes_estimates = (
+        bool(taxi_legs)
+        or any(result is True for result in item_results)
+        or any(result.is_estimate for result in transit_fares)
+    )
     return _CostOutcome((), Money(amount=amount, currency=currency), includes_estimates)
 
 
@@ -700,6 +759,9 @@ def check_candidate(
     _require_unique_evidence_ids(evidence)
     cited_ids = _cited_ids(candidate)
     known_ids = frozenset(item.evidence_id for item in evidence)
+    sourced_ids = frozenset(
+        item.evidence_id for item in evidence if isinstance(item, SourcedFinding)
+    )
     cited_set = frozenset(cited_ids)
     cited = tuple(item for item in evidence if item.evidence_id in cited_set)
 
@@ -724,7 +786,7 @@ def check_candidate(
             gap_failures,
             _check_transport_modes(candidate.legs, request.transport_modes),
             _check_transfers(candidate.legs),
-            _check_explicit_constraints(request.constraints, cited, context),
+            _check_explicit_constraints(request.constraints, cited, sourced_ids, context),
             opening_failures,
             *(
                 _check_visit_duration(index, stop, evidence, context)

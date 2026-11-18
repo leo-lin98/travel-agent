@@ -565,12 +565,18 @@ def test_unusable_input_errors_share_a_base_class() -> None:
 
 
 def transit_candidate(transfers: list[tuple[int, int]]) -> Doc:
-    base = park_candidate(60, 30, 30)
-    return cast(Doc, replaced(base, ("legs", 1), leg("public_transit", 30, 6000, transfers)))
+    """Park candidate whose second leg is public transit citing the JPY 200 fare."""
+    transit_leg = {**leg("public_transit", 30, 6000, transfers), "evidence_ids": ["ev-fare"]}
+    return cast(Doc, replaced(park_candidate(60, 30, 30), ("legs", 1), transit_leg))
+
+
+def transit_evidence() -> list[Doc]:
+    """Park evidence plus an official, plan-wide JPY 200 transit fare."""
+    return [*park_evidence(WIDE_OPEN), price("ev-fare", None, "200", "JPY")]
 
 
 def test_three_minute_transfer_needing_ten_minutes_walk_is_rejected() -> None:
-    result = run(request_doc(), transit_candidate([(6, 4), (3, 10)]), park_evidence(WIDE_OPEN))
+    result = run(request_doc(), transit_candidate([(6, 4), (3, 10)]), transit_evidence())
 
     failure = only_failure(result, ConstraintId.TRANSFER_TIME)
     assert failure.inputs["leg_index"] == "1"
@@ -580,7 +586,7 @@ def test_three_minute_transfer_needing_ten_minutes_walk_is_rejected() -> None:
 
 
 def test_transfer_walk_equal_to_available_time_passes() -> None:
-    checked(run(request_doc(), transit_candidate([(10, 10)]), park_evidence(WIDE_OPEN)))
+    checked(run(request_doc(), transit_candidate([(10, 10)]), transit_evidence()))
 
 
 # --- opening and access (R9, O2, AC3) ----------------------------------------------
@@ -1149,6 +1155,108 @@ def test_different_per_km_among_applicable_taxi_rates_is_a_conflict() -> None:
     assert failure.inputs["leg_index"] == "0"
 
 
+# --- transit fares (R13: the cap covers transport; the leg cites its fare) ----------
+
+
+def transit_fare_guess(amount: str) -> Doc:
+    claim: Doc = {"kind": "cost_amount", "amount": money(amount, "JPY")}
+    return estimate("ev-fare", "cost", "ai_best_guess", scope(None, DAY_FROM, DAY_UNTIL), claim)
+
+
+def test_transit_fare_cited_by_its_leg_is_added_to_the_total() -> None:
+    result = checked(run(request_doc(), transit_candidate([]), transit_evidence()))
+
+    assert result.total_cost.amount == Decimal("700")  # 500 admission + 200 fare
+    assert result.total_includes_estimates is False
+
+
+def test_transit_fare_counts_toward_the_cap() -> None:
+    result = run(with_budget("699"), transit_candidate([]), transit_evidence())
+
+    failure = only_failure(result, ConstraintId.BUDGET)
+    assert failure.inputs["reason"] == "over_budget"
+    assert Decimal(failure.inputs["total_cost"]) == Decimal("700")
+
+
+def test_transit_leg_without_a_cited_fare_is_rejected() -> None:
+    # The fare exists in the evidence, but the leg does not cite it.
+    candidate = replaced(transit_candidate([]), ("legs", 1, "evidence_ids"), [])
+
+    result = run(request_doc(), candidate, transit_evidence())
+
+    failure = only_failure(result, ConstraintId.MISSING_EVIDENCE)
+    assert failure.inputs["reason"] == "no_transit_fare"
+    assert failure.inputs["leg_index"] == "1"
+
+
+def test_transit_leg_citing_only_non_fare_evidence_is_rejected() -> None:
+    candidate = replaced(transit_candidate([]), ("legs", 1, "evidence_ids"), ["ev-park-hours"])
+
+    result = run(request_doc(), candidate, transit_evidence())
+
+    assert reasons(result, ConstraintId.MISSING_EVIDENCE) == {"no_transit_fare"}
+
+
+def test_outdated_transit_fare_is_not_current() -> None:
+    stale = sourced(
+        "ev-fare",
+        "cost",
+        WEBSITE,
+        scope(None, "2025-01-01T00:00:00+09:00", "2025-12-31T23:59:00+09:00"),
+        {"kind": "cost_amount", "amount": money("200", "JPY")},
+    )
+
+    result = run(request_doc(), transit_candidate([]), [*park_evidence(WIDE_OPEN), stale])
+
+    assert reasons(result, ConstraintId.MISSING_EVIDENCE) == {"no_transit_fare"}
+
+
+def test_ai_best_guess_transit_fare_is_counted_and_labelled() -> None:
+    evidence = [*park_evidence(WIDE_OPEN), transit_fare_guess("250")]
+
+    result = checked(run(request_doc(), transit_candidate([]), evidence))
+
+    assert result.total_cost.amount == Decimal("750")
+    assert result.total_includes_estimates is True
+
+
+def test_leg_citing_two_different_fares_is_rejected() -> None:
+    candidate = replaced(transit_candidate([]), ("legs", 1, "evidence_ids"), ["ev-fare", "ev-f2"])
+    evidence = [*transit_evidence(), price("ev-f2", None, "220", "JPY")]
+
+    result = run(request_doc(), candidate, evidence)
+
+    failure = only_failure(result, ConstraintId.MISSING_EVIDENCE)
+    assert failure.inputs["reason"] == "conflicting_transit_fares"
+    assert failure.inputs["leg_index"] == "1"
+
+
+def test_leg_citing_the_same_fare_twice_counts_it_once() -> None:
+    candidate = replaced(transit_candidate([]), ("legs", 1, "evidence_ids"), ["ev-fare", "ev-f2"])
+    evidence = [*transit_evidence(), price("ev-f2", None, "200.00", "JPY")]
+
+    result = checked(run(request_doc(), candidate, evidence))
+
+    assert result.total_cost.amount == Decimal("700")
+
+
+def test_transit_fare_in_another_currency_from_the_budget_is_rejected() -> None:
+    evidence = [*park_evidence(WIDE_OPEN), price("ev-fare", None, "2", "USD")]
+
+    result = run(request_doc(), transit_candidate([]), evidence)
+
+    assert reasons(result, ConstraintId.BUDGET) == {"currency_mismatch"}
+
+
+def test_transit_fare_sets_the_currency_when_nothing_else_is_priced() -> None:
+    candidate = replaced(transit_candidate([]), ("costs",), [])
+
+    result = checked(run(with_budget(None), candidate, transit_evidence()))
+
+    assert result.total_cost.amount == Decimal("200")
+    assert result.total_cost.currency == "JPY"
+
+
 def test_different_taxi_price_outside_the_outing_date_is_not_a_conflict() -> None:
     expired = taxi_rate("ev-taxi-rate-old", "450", "350", "2025-04-01", "2026-03-31")
 
@@ -1269,10 +1377,67 @@ def test_constraint_evidence_for_a_place_not_in_the_plan_does_not_count() -> Non
     assert constraint_ids(result) == {ConstraintId.EXPLICIT_CONSTRAINT}
 
 
+# An Estimate supports a constraint only when based_on is non-empty and every id in it
+# is a SourcedFinding (decision 2026-11-18); a bare AI best guess never does.
+
+
+def estimated_support(evidence_id: str, label: str, based_on: list[str]) -> Doc:
+    claim: Doc = {"kind": "constraint", "constraint_index": 0}
+    item = estimate(evidence_id, "constraint", label, scope(PARK, DAY_FROM, DAY_UNTIL), claim)
+    return {**item, "based_on": based_on}
+
+
+def run_with_estimated_support(extra: list[Doc]) -> CheckedItinerary | ValidationFeedback:
+    """Park plan with constraint 0 'Include a park', citing the estimate 'ev-support'."""
+    candidate = cite(
+        park_candidate(60, 30, 30), ["ev-park-hours", "ev-park-duration", "ev-support"]
+    )
+    return run(with_constraints(["Include a park"]), candidate, [*park_evidence(WIDE_OPEN), *extra])
+
+
+@pytest.mark.parametrize("label", ["estimate", "ai_best_guess"])
+def test_estimate_without_a_basis_does_not_support_a_constraint(label: str) -> None:
+    result = run_with_estimated_support([estimated_support("ev-support", label, [])])
+
+    failure = only_failure(result, ConstraintId.EXPLICIT_CONSTRAINT)
+    assert failure.inputs["constraint_index"] == "0"
+
+
+@pytest.mark.parametrize("label", ["estimate", "ai_best_guess"])
+def test_estimate_based_on_sourced_findings_supports_a_constraint(label: str) -> None:
+    support = estimated_support("ev-support", label, ["ev-park-hours", "ev-park-price"])
+
+    checked(run_with_estimated_support([support]))
+
+
+def test_estimate_based_on_unknown_evidence_does_not_support_a_constraint() -> None:
+    result = run_with_estimated_support([estimated_support("ev-support", "estimate", ["ev-nope"])])
+
+    assert constraint_ids(result) == {ConstraintId.EXPLICIT_CONSTRAINT}
+
+
+def test_estimate_based_only_on_another_estimate_does_not_support_a_constraint() -> None:
+    other = estimated_support("ev-other-guess", "ai_best_guess", [])
+    support = estimated_support("ev-support", "estimate", ["ev-other-guess"])
+
+    result = run_with_estimated_support([other, support])
+
+    assert constraint_ids(result) == {ConstraintId.EXPLICIT_CONSTRAINT}
+
+
+def test_estimate_with_any_unsourced_basis_does_not_support_a_constraint() -> None:
+    other = estimated_support("ev-other-guess", "ai_best_guess", [])
+    support = estimated_support("ev-support", "estimate", ["ev-park-hours", "ev-other-guess"])
+
+    result = run_with_estimated_support([other, support])
+
+    assert constraint_ids(result) == {ConstraintId.EXPLICIT_CONSTRAINT}
+
+
 def test_leg_mode_outside_the_requested_modes_is_rejected() -> None:
     request = replaced(request_doc(), ("transport_modes",), ["walking"])
 
-    result = run(request, transit_candidate([]), park_evidence(WIDE_OPEN))
+    result = run(request, transit_candidate([]), transit_evidence())
 
     failure = only_failure(result, ConstraintId.TRANSPORT_AVAILABILITY)
     assert failure.inputs["leg_index"] == "1"
@@ -1282,7 +1447,7 @@ def test_leg_mode_outside_the_requested_modes_is_rejected() -> None:
 def test_unstated_transport_modes_do_not_restrict_legs() -> None:
     request = replaced(request_doc(), ("transport_modes",), [])
 
-    checked(run(request, transit_candidate([]), park_evidence(WIDE_OPEN)))
+    checked(run(request, transit_candidate([]), transit_evidence()))
 
 
 # --- structured results (AC8) ------------------------------------------------------
@@ -1291,7 +1456,7 @@ def test_unstated_transport_modes_do_not_restrict_legs() -> None:
 def test_independent_failures_are_all_reported() -> None:
     request = replaced(with_budget("100"), ("transport_modes",), ["walking"])
 
-    result = run(request, transit_candidate([(3, 10)]), park_evidence(WIDE_OPEN))
+    result = run(request, transit_candidate([(3, 10)]), transit_evidence())
 
     assert isinstance(result, ValidationFeedback)
     assert result.candidate_id == "cand-test"

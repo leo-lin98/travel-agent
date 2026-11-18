@@ -632,6 +632,27 @@ def test_validation_feedback_names_failed_constraints_and_inputs() -> None:
     assert all(failure.message for failure in feedback.failures)
 
 
+def test_feedback_inputs_cannot_be_changed_after_validation() -> None:
+    feedback = ValidationFeedback.model_validate_json(read_text("validation_feedback.json"))
+    inputs = feedback.failures[0].inputs
+    # The cast reaches past the read-only type to try what a careless caller could do.
+    writable = cast(dict[str, str], inputs)
+
+    with pytest.raises(TypeError):
+        writable["latest_allowed_arrival"] = "tampered"
+
+    assert inputs["latest_allowed_arrival"] == "2026-11-20T18:45:00+09:00"
+
+
+def test_feedback_inputs_serialise_as_a_json_object() -> None:
+    feedback = ValidationFeedback.model_validate_json(read_text("validation_feedback.json"))
+
+    dumped = json.loads(feedback.model_dump_json())
+
+    assert dumped == read_fixture("validation_feedback.json")
+    assert ValidationFeedback.model_validate_json(feedback.model_dump_json()) == feedback
+
+
 @pytest.mark.parametrize(
     ("path", "value"),
     [
@@ -792,9 +813,10 @@ def test_checked_fixture_schedule_and_totals_are_consistent() -> None:
     assert final_arrival == itinerary.arrival_at_commitment
     assert request.commitment.time is not None
     assert itinerary.arrival_at_commitment == request.commitment.time - ARRIVAL_BUFFER
+    # Cost items plus the 180 metro fare the transit leg cites (evidence.json ev-transit-fare).
     assert itinerary.total_cost.amount == sum(
         (cost.amount.amount for cost in itinerary.candidate.costs), Decimal(0)
-    )
+    ) + Decimal("180")
     assert request.budget is not None
     assert itinerary.total_cost.amount <= request.budget.amount
     assert itinerary.total_includes_estimates

@@ -413,16 +413,6 @@
           "evidence_ids": [
             "ev-garden-admission"
           ]
-        },
-        {
-          "description": "Metro fare to dinner",
-          "amount": {
-            "amount": "200",
-            "currency": "JPY"
-          },
-          "evidence_ids": [
-            "ev-transit-fare"
-          ]
         }
       ]
     },
@@ -474,16 +464,6 @@
           "evidence_ids": [
             "ev-garden-admission"
           ]
-        },
-        {
-          "description": "Metro fare to dinner",
-          "amount": {
-            "amount": "200",
-            "currency": "JPY"
-          },
-          "evidence_ids": [
-            "ev-transit-fare"
-          ]
         }
       ]
     },
@@ -529,16 +509,6 @@
           },
           "evidence_ids": [
             "ev-museum-admission"
-          ]
-        },
-        {
-          "description": "Metro fare to museum",
-          "amount": {
-            "amount": "200",
-            "currency": "JPY"
-          },
-          "evidence_ids": [
-            "ev-transit-fare"
           ]
         }
       ]

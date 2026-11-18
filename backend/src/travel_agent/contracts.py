@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Annotated, Final, Literal, cast
 from zoneinfo import available_timezones
 
@@ -22,6 +23,7 @@ from pydantic import (
     ConfigDict,
     Field,
     HttpUrl,
+    PlainSerializer,
     StringConstraints,
     ValidationInfo,
     field_validator,
@@ -75,6 +77,11 @@ def _require_unique[T](values: tuple[T, ...]) -> tuple[T, ...]:
     if duplicates:
         raise ValueError(f"duplicate entries are not allowed: {duplicates}")
     return values
+
+
+def _read_only[K, V](mapping: Mapping[K, V]) -> Mapping[K, V]:
+    """Return a read-only copy so a frozen model cannot be changed through a mapping field."""
+    return MappingProxyType(dict(mapping))
 
 
 # --- scalar types ---------------------------------------------------------------
@@ -546,7 +553,10 @@ class ConstraintFailure(_Contract):
     constraint: ConstraintId
     message: _FreeText
     inputs: Annotated[
-        dict[_LabelText, _FreeText], Field(min_length=1, max_length=MAX_FEEDBACK_INPUTS)
+        Mapping[_LabelText, _FreeText],
+        Field(min_length=1, max_length=MAX_FEEDBACK_INPUTS),
+        AfterValidator(_read_only),
+        PlainSerializer(dict, return_type=dict[str, str]),
     ]
 
 
