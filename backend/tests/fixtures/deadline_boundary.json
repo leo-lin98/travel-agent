@@ -1,0 +1,655 @@
+{
+  "request": {
+    "schema_version": 1,
+    "gap": {
+      "start_time": "2026-11-20T15:45:00+09:00",
+      "start_location": {
+        "label": "Synthetic Shibuya start point",
+        "latitude": 35.658,
+        "longitude": 139.7016,
+        "place_id": null
+      }
+    },
+    "commitment": {
+      "location": {
+        "label": "Synthetic Ginza dinner venue",
+        "latitude": 35.6717,
+        "longitude": 139.765,
+        "place_id": "ChIJsyntheticGinzaDinner0001"
+      },
+      "time": "2026-11-20T19:00:00+09:00",
+      "timezone": "Asia/Tokyo"
+    },
+    "budget": {
+      "amount": "3000",
+      "currency": "JPY"
+    },
+    "transport_modes": [
+      "walking",
+      "public_transit",
+      "taxi_rideshare"
+    ],
+    "constraints": [],
+    "unresolved_questions": []
+  },
+  "evidence": [
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-garden-hours",
+      "topic": "opening_access",
+      "source": {
+        "url": "https://ev-garden-hours.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineGarden000001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Open 9:00-21:00 today.",
+      "claim": {
+        "kind": "opening_access",
+        "status": "open",
+        "open_intervals": [
+          {
+            "opens_at": "2026-11-20T09:00:00+09:00",
+            "closes_at": "2026-11-20T21:00:00+09:00"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-garden-duration",
+      "topic": "visit_duration",
+      "source": {
+        "url": "https://ev-garden-duration.example.org/",
+        "kind": "other_web",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineGarden000001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "A full garden walk takes about two hours.",
+      "claim": {
+        "kind": "visit_duration",
+        "minutes": 120
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-garden-admission",
+      "topic": "cost",
+      "source": {
+        "url": "https://ev-garden-admission.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineGarden000001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Adult admission JPY 1000.",
+      "claim": {
+        "kind": "cost_amount",
+        "amount": {
+          "amount": "1000",
+          "currency": "JPY"
+        }
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-museum-hours",
+      "topic": "opening_access",
+      "source": {
+        "url": "https://ev-museum-hours.example.org/",
+        "kind": "google_maps",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineMuseum000001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Hours today: 10:00-20:00.",
+      "claim": {
+        "kind": "opening_access",
+        "status": "open",
+        "open_intervals": [
+          {
+            "opens_at": "2026-11-20T10:00:00+09:00",
+            "closes_at": "2026-11-20T20:00:00+09:00"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-museum-duration",
+      "topic": "visit_duration",
+      "source": {
+        "url": "https://ev-museum-duration.example.org/",
+        "kind": "other_web",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineMuseum000001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Most visitors stay an hour.",
+      "claim": {
+        "kind": "visit_duration",
+        "minutes": 60
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-museum-admission",
+      "topic": "cost",
+      "source": {
+        "url": "https://ev-museum-admission.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineMuseum000001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Adult admission JPY 800.",
+      "claim": {
+        "kind": "cost_amount",
+        "amount": {
+          "amount": "800",
+          "currency": "JPY"
+        }
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-hotel-hours",
+      "topic": "opening_access",
+      "source": {
+        "url": "https://ev-hotel-hours.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineGrandHotel01",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Lobby lounge open all day.",
+      "claim": {
+        "kind": "opening_access",
+        "status": "open",
+        "open_intervals": [
+          {
+            "opens_at": "2026-11-20T00:00:00+09:00",
+            "closes_at": "2026-11-20T23:59:00+09:00"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "estimate",
+      "evidence_id": "ev-hotel-duration",
+      "topic": "visit_duration",
+      "label": "ai_best_guess",
+      "scope": {
+        "place_id": "ChIJdeadlineGrandHotel01",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "basis": "No source gives a typical stay; 30 minutes is the AI's best guess.",
+      "based_on": [],
+      "claim": {
+        "kind": "visit_duration",
+        "minutes": 30
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-hotel-tea",
+      "topic": "cost",
+      "source": {
+        "url": "https://ev-hotel-tea.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineGrandHotel01",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Afternoon tea set JPY 500.",
+      "claim": {
+        "kind": "cost_amount",
+        "amount": {
+          "amount": "500",
+          "currency": "JPY"
+        }
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-cafe-hours",
+      "topic": "opening_access",
+      "source": {
+        "url": "https://ev-cafe-hours.example.org/",
+        "kind": "google_maps",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": "ChIJdeadlineHotelCafe001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Hours today: 10:00-22:00.",
+      "claim": {
+        "kind": "opening_access",
+        "status": "open",
+        "open_intervals": [
+          {
+            "opens_at": "2026-11-20T10:00:00+09:00",
+            "closes_at": "2026-11-20T22:00:00+09:00"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "estimate",
+      "evidence_id": "ev-cafe-duration",
+      "topic": "visit_duration",
+      "label": "estimate",
+      "scope": {
+        "place_id": "ChIJdeadlineHotelCafe001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "basis": "Typical coffee stop length from reviews.",
+      "based_on": [],
+      "claim": {
+        "kind": "visit_duration",
+        "minutes": 45
+      }
+    },
+    {
+      "kind": "estimate",
+      "evidence_id": "ev-cafe-coffee",
+      "topic": "cost",
+      "label": "ai_best_guess",
+      "scope": {
+        "place_id": "ChIJdeadlineHotelCafe001",
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "basis": "We couldn't find a better estimate; this is the AI's best guess.",
+      "based_on": [],
+      "claim": {
+        "kind": "cost_amount",
+        "amount": {
+          "amount": "700",
+          "currency": "JPY"
+        }
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-transit-fare",
+      "topic": "cost",
+      "source": {
+        "url": "https://ev-transit-fare.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": null,
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Adult IC fare for this band: JPY 200.",
+      "claim": {
+        "kind": "cost_amount",
+        "amount": {
+          "amount": "200",
+          "currency": "JPY"
+        }
+      }
+    },
+    {
+      "kind": "sourced_finding",
+      "evidence_id": "ev-taxi-rate",
+      "topic": "cost",
+      "source": {
+        "url": "https://ev-taxi-rate.example.org/",
+        "kind": "official_website",
+        "title": null
+      },
+      "retrieved_at": "2026-11-20T14:30:00+09:00",
+      "scope": {
+        "place_id": null,
+        "applies_from": "2026-11-20T00:00:00+09:00",
+        "applies_until": "2026-11-20T23:59:00+09:00"
+      },
+      "finding": "Base fare JPY 500 plus JPY 400 per km.",
+      "claim": {
+        "kind": "taxi_rate",
+        "base_fare": {
+          "amount": "500",
+          "currency": "JPY"
+        },
+        "per_km": {
+          "amount": "400",
+          "currency": "JPY"
+        },
+        "valid_from": "2026-04-01",
+        "valid_until": "2027-03-31"
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "cand-garden-on-time",
+      "stops": [
+        {
+          "place_id": "ChIJdeadlineGarden000001",
+          "label": "Synthetic Deadline Garden",
+          "latitude": 35.67,
+          "longitude": 139.71,
+          "visit_minutes": 120,
+          "evidence_ids": [
+            "ev-garden-hours",
+            "ev-garden-duration"
+          ]
+        }
+      ],
+      "legs": [
+        {
+          "mode": "walking",
+          "duration_minutes": 30,
+          "distance_meters": 2000,
+          "transfers": [],
+          "evidence_ids": []
+        },
+        {
+          "mode": "public_transit",
+          "duration_minutes": 30,
+          "distance_meters": 5000,
+          "transfers": [
+            {
+              "available_minutes": 5,
+              "walk_minutes": 4
+            }
+          ],
+          "evidence_ids": [
+            "ev-transit-fare"
+          ]
+        }
+      ],
+      "costs": [
+        {
+          "description": "Garden admission",
+          "amount": {
+            "amount": "1000",
+            "currency": "JPY"
+          },
+          "evidence_ids": [
+            "ev-garden-admission"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "cand-garden-late",
+      "stops": [
+        {
+          "place_id": "ChIJdeadlineGarden000001",
+          "label": "Synthetic Deadline Garden",
+          "latitude": 35.67,
+          "longitude": 139.71,
+          "visit_minutes": 121,
+          "evidence_ids": [
+            "ev-garden-hours",
+            "ev-garden-duration"
+          ]
+        }
+      ],
+      "legs": [
+        {
+          "mode": "walking",
+          "duration_minutes": 30,
+          "distance_meters": 2000,
+          "transfers": [],
+          "evidence_ids": []
+        },
+        {
+          "mode": "public_transit",
+          "duration_minutes": 30,
+          "distance_meters": 5000,
+          "transfers": [
+            {
+              "available_minutes": 5,
+              "walk_minutes": 4
+            }
+          ],
+          "evidence_ids": [
+            "ev-transit-fare"
+          ]
+        }
+      ],
+      "costs": [
+        {
+          "description": "Garden admission",
+          "amount": {
+            "amount": "1000",
+            "currency": "JPY"
+          },
+          "evidence_ids": [
+            "ev-garden-admission"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "cand-museum-transit",
+      "stops": [
+        {
+          "place_id": "ChIJdeadlineMuseum000001",
+          "label": "Synthetic Deadline Museum",
+          "latitude": 35.67,
+          "longitude": 139.71,
+          "visit_minutes": 60,
+          "evidence_ids": [
+            "ev-museum-hours",
+            "ev-museum-duration"
+          ]
+        }
+      ],
+      "legs": [
+        {
+          "mode": "public_transit",
+          "duration_minutes": 20,
+          "distance_meters": 4000,
+          "transfers": [],
+          "evidence_ids": [
+            "ev-transit-fare"
+          ]
+        },
+        {
+          "mode": "walking",
+          "duration_minutes": 40,
+          "distance_meters": 3000,
+          "transfers": [],
+          "evidence_ids": []
+        }
+      ],
+      "costs": [
+        {
+          "description": "Museum admission",
+          "amount": {
+            "amount": "800",
+            "currency": "JPY"
+          },
+          "evidence_ids": [
+            "ev-museum-admission"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "cand-museum-taxi",
+      "stops": [
+        {
+          "place_id": "ChIJdeadlineMuseum000001",
+          "label": "Synthetic Deadline Museum",
+          "latitude": 35.67,
+          "longitude": 139.71,
+          "visit_minutes": 60,
+          "evidence_ids": [
+            "ev-museum-hours",
+            "ev-museum-duration"
+          ]
+        }
+      ],
+      "legs": [
+        {
+          "mode": "taxi_rideshare",
+          "duration_minutes": 10,
+          "distance_meters": 4000,
+          "transfers": [],
+          "evidence_ids": [
+            "ev-taxi-rate"
+          ]
+        },
+        {
+          "mode": "walking",
+          "duration_minutes": 40,
+          "distance_meters": 3000,
+          "transfers": [],
+          "evidence_ids": []
+        }
+      ],
+      "costs": [
+        {
+          "description": "Museum admission",
+          "amount": {
+            "amount": "800",
+            "currency": "JPY"
+          },
+          "evidence_ids": [
+            "ev-museum-admission"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "cand-hotel-cafe",
+      "stops": [
+        {
+          "place_id": "ChIJdeadlineHotelCafe001",
+          "label": "Lobby Cafe at Synthetic Grand Hotel",
+          "latitude": 35.67,
+          "longitude": 139.71,
+          "visit_minutes": 45,
+          "evidence_ids": [
+            "ev-cafe-hours",
+            "ev-cafe-duration"
+          ]
+        }
+      ],
+      "legs": [
+        {
+          "mode": "walking",
+          "duration_minutes": 15,
+          "distance_meters": 1000,
+          "transfers": [],
+          "evidence_ids": []
+        },
+        {
+          "mode": "walking",
+          "duration_minutes": 20,
+          "distance_meters": 1500,
+          "transfers": [],
+          "evidence_ids": []
+        }
+      ],
+      "costs": [
+        {
+          "description": "Coffee",
+          "amount": {
+            "amount": "700",
+            "currency": "JPY"
+          },
+          "evidence_ids": [
+            "ev-cafe-coffee"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate_id": "cand-hotel",
+      "stops": [
+        {
+          "place_id": "ChIJdeadlineGrandHotel01",
+          "label": "Synthetic Grand Hotel",
+          "latitude": 35.67,
+          "longitude": 139.71,
+          "visit_minutes": 30,
+          "evidence_ids": [
+            "ev-hotel-hours",
+            "ev-hotel-duration"
+          ]
+        }
+      ],
+      "legs": [
+        {
+          "mode": "walking",
+          "duration_minutes": 15,
+          "distance_meters": 1000,
+          "transfers": [],
+          "evidence_ids": []
+        },
+        {
+          "mode": "walking",
+          "duration_minutes": 20,
+          "distance_meters": 1500,
+          "transfers": [],
+          "evidence_ids": []
+        }
+      ],
+      "costs": [
+        {
+          "description": "Afternoon tea",
+          "amount": {
+            "amount": "500",
+            "currency": "JPY"
+          },
+          "evidence_ids": [
+            "ev-hotel-tea"
+          ]
+        }
+      ]
+    }
+  ],
+  "recommendation": {
+    "candidate_id": "cand-garden-on-time",
+    "reason": "A full two-hour garden walk that still reaches dinner exactly at the 18:45 cutoff."
+  }
+}

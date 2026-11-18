@@ -1,0 +1,384 @@
+[
+  {
+    "case_id": "dev-tokyo-transit-dinner",
+    "requirement_ids": ["R1", "R2", "R7"],
+    "now": "2026-11-20T14:30:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Shibuya Station and free from 3pm. I have a dinner reservation in Ginza at 7pm. I'll take the train. What can I do until then?"
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "All essentials are stated in one message; the commitment is given as an area (Ginza), which is enough to plan, so no clarification is needed. Expect up to three complete options that differ by at least one activity stop, each with a leave-by time per stop, transit legs ending at the Ginza dinner, an arrival time, and an estimated total."
+  },
+  {
+    "case_id": "dev-tokyo-arrival-buffer",
+    "requirement_ids": ["R8"],
+    "now": "2026-11-21T15:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm near Asakusa's Senso-ji temple right now. My concert at Tokyo Dome starts at 7pm sharp. Find me something to do before it, by subway."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The commitment is a specific venue. Every option must arrive at Tokyo Dome by 6:45 PM local time; 6:45 exactly is acceptable. The leave-by time from the last stop must reach the venue by that cutoff."
+  },
+  {
+    "case_id": "dev-missing-commitment-time",
+    "requirement_ids": ["R1"],
+    "now": "2026-11-20T13:00:00+09:00",
+    "device_location": {
+      "label": "Device location near Shinjuku Station",
+      "latitude": 35.6896,
+      "longitude": 139.7006,
+      "place_id": null
+    },
+    "user_messages": [
+      "I've got a dinner in Roppongi later today. What should I do until then?"
+    ],
+    "expected_outcome": "clarification",
+    "notes": "The commitment time is missing, so the agent must ask for it instead of assuming a dinner hour. The area-level location (Roppongi) is enough, so the agent should not ask for a specific venue."
+  },
+  {
+    "case_id": "dev-ambiguous-commitment-location",
+    "requirement_ids": ["R1"],
+    "now": "2026-11-23T10:00:00-05:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Grand Central Terminal and I'm free now. I need to be at the Starbucks at 3pm for a meeting. Any ideas for the time in between?"
+    ],
+    "expected_outcome": "clarification",
+    "notes": "'The Starbucks' names a chain with many branches in Manhattan, not an area or one venue, so the commitment location is unclear and the agent must ask which branch rather than picking one. This differs from an area-level location such as a district, which is enough to plan."
+  },
+  {
+    "case_id": "dev-location-denied-asks-start",
+    "requirement_ids": ["R6", "R1"],
+    "now": "2026-11-24T11:00:00+00:00",
+    "device_location": null,
+    "user_messages": [
+      "I have a few hours free before a 4pm meeting at King's Cross station. What can I do?"
+    ],
+    "expected_outcome": "clarification",
+    "notes": "Device location permission is denied and no starting point is stated, so the agent must ask the user to say where they are starting."
+  },
+  {
+    "case_id": "dev-location-denied-then-stated",
+    "requirement_ids": ["R6", "R3"],
+    "now": "2026-11-24T11:00:00+00:00",
+    "device_location": null,
+    "user_messages": [
+      "I have a few hours free before a 4pm meeting at King's Cross station. What can I do?",
+      "I'm starting from the British Museum, and I can leave around noon."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The second turn answers the starting-location question. The agent must keep the 4pm King's Cross commitment from the first turn without asking for it again."
+  },
+  {
+    "case_id": "dev-device-location-granted",
+    "requirement_ids": ["R6"],
+    "now": "2026-11-25T13:30:00+01:00",
+    "device_location": {
+      "label": "Device location near Place de la Republique",
+      "latitude": 48.8674,
+      "longitude": 2.3636,
+      "place_id": null
+    },
+    "user_messages": [
+      "I'm free right now until a 6pm drinks meetup near the Eiffel Tower. Metro is fine. What should I do?"
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Device location was shared, so the agent should use it as the starting point and not ask where the user is."
+  },
+  {
+    "case_id": "dev-voice-transcript",
+    "requirement_ids": ["R3"],
+    "now": "2026-11-26T12:15:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "um so i'm at kyoto station right now and uh i've got a train back from kyoto station at like six fifteen so what can i do till then i'll just take the bus or subway"
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "A transcribed spoken message with filler words and no punctuation. It must be handled like the typed equivalent: start Kyoto Station now, commitment Kyoto Station 6:15 PM, transit."
+  },
+  {
+    "case_id": "dev-details-across-turns",
+    "requirement_ids": ["R3", "R1"],
+    "now": "2026-11-27T09:30:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "Hi, I'm in Barcelona and have some time to kill today.",
+      "I'm staying near Placa de Catalunya and I'm free from 11am.",
+      "My flight check-in means I need to be at Barcelona Sants station by 3pm. I'll use the metro."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Essentials arrive across three turns. The final turn completes them, so the agent should plan using context remembered from all earlier turns."
+  },
+  {
+    "case_id": "dev-anonymous-first-visit",
+    "requirement_ids": ["R4"],
+    "now": "2026-11-28T10:00:00+11:00",
+    "device_location": null,
+    "user_messages": [
+      "First time using this. I'm at Circular Quay, free now, and I have lunch booked in Surry Hills at 1:30pm. I can walk or take the train."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "A new visitor with no account or sign-in completes the whole planning flow. The agent must not ask the user to log in or register."
+  },
+  {
+    "case_id": "dev-device-timezone-differs",
+    "requirement_ids": ["R1"],
+    "now": "2026-11-19T22:30:00-08:00",
+    "device_location": null,
+    "user_messages": [
+      "I just landed and my phone is still on California time. I'm at Ueno Station in Tokyo and I'm free now. I have dinner at 7pm in Shinjuku. Train is fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The device clock is Los Angeles time, but it is 3:30 PM on 2026-11-20 in Tokyo. The 7pm dinner and every leave-by time must be in Asia/Tokyo time on 2026-11-20."
+  },
+  {
+    "case_id": "dev-gap-starts-later",
+    "requirement_ids": ["R1"],
+    "now": "2026-11-30T09:00:00-03:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm in a work session until 2pm at Avenida Paulista, near MASP. After that I'm free until a 6:30pm dinner in Vila Madalena. I'll use taxis."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The gap starts at 2 PM, not now. No option may schedule anything before 2 PM local time in Sao Paulo."
+  },
+  {
+    "case_id": "dev-activity-preference",
+    "requirement_ids": ["R1"],
+    "now": "2026-12-01T15:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Osaka Station, free now until a 7:30pm show in Namba. I really want to eat takoyaki and see something historic. Subway is fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Activity preferences are optional but stated here, so every option should include food matching the request and a historic site, while still meeting hard constraints."
+  },
+  {
+    "case_id": "dev-indoor-only-constraint",
+    "requirement_ids": ["R9"],
+    "now": "2026-12-02T13:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Amsterdam Centraal, free now until a 5pm meeting near Museumplein. Indoor activities only please, I don't want to be outside except while travelling. Tram is fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The user's explicit indoor-only instruction is a hard constraint for this outing. No option may include a park, outdoor market, or other outdoor stop."
+  },
+  {
+    "case_id": "dev-rain-outdoor-warning",
+    "requirement_ids": ["R9"],
+    "now": "2026-12-03T12:00:00+00:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Waverley station in Edinburgh, free now till a 5pm meeting on the Royal Mile. I know it's supposed to rain, but I still want to walk up Arthur's Seat. Walking only."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "If rain is forecast for the visit, a weather warning is shown; the outdoor hike is not rejected for rain alone, and access to the park is still verified."
+  },
+  {
+    "case_id": "dev-closed-venue-only-choice",
+    "requirement_ids": ["R9", "R14"],
+    "now": "2026-11-30T10:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Ueno Station and free now until a 4pm meeting in Akihabara. The only thing I want to do is visit the Tokyo National Museum. Walking or subway is fine."
+    ],
+    "expected_outcome": "no_feasible_result",
+    "notes": "2026-11-30 is a non-holiday Monday, when the museum's regular schedule says it is closed. The closed venue must be rejected, and since it is the only requested activity, the agent says no plan fits, and its retry question may offer alternatives such as another museum or another day's plan; it does not substitute one on its own. Re-check the museum's official calendar before relying on this case live."
+  },
+  {
+    "case_id": "dev-mountain-access-verified",
+    "requirement_ids": ["R9", "R10"],
+    "now": "2026-12-04T09:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Shinjuku Station, free from 9:30am until a 5pm meeting back at Shinjuku. I'd like to hike Mount Takao. Trains are fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Mountains need verified access too. The hike's trail access must be confirmed from an official source for the outing date, and the visit duration must reflect a realistic hike rather than a generic default."
+  },
+  {
+    "case_id": "dev-realistic-museum-duration",
+    "requirement_ids": ["R10"],
+    "now": "2026-12-05T10:30:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Gare du Nord and free now until a 4pm meeting near Opera Garnier. I want to spend real time at the Louvre, not just rush through. Metro please."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The Louvre visit duration should come from research on the specific museum and allow a substantial visit; no fixed minimum applies to all activities."
+  },
+  {
+    "case_id": "dev-unknown-duration-best-guess",
+    "requirement_ids": ["R10"],
+    "now": "2026-12-06T14:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Kichijoji Station, free now until a 6pm dinner in Nakano. I like quiet local shrines and small independent bookshops. Train or walking."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Small local shrines and bookshops may have no published visit duration. Where research cannot establish one, the duration must be shown as a clearly labeled best-guess estimate."
+  },
+  {
+    "case_id": "dev-walking-only",
+    "requirement_ids": ["R7"],
+    "now": "2026-12-07T13:00:00+00:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Covent Garden, free now until a 4:30pm meeting at Southbank Centre. I only want to walk, no tube or taxis."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Every leg of every option, including the final leg to the commitment, must be walking."
+  },
+  {
+    "case_id": "dev-taxi-budget-usd",
+    "requirement_ids": ["R7", "R13"],
+    "now": "2026-12-08T13:00:00-05:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at the Brooklyn Museum and free now until a 6pm dinner in the West Village. I'll take taxis or Ubers only. My budget is 80 US dollars total."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "Taxi fares must be estimated from driving distance and a rate current on the outing date, labeled as estimates, and counted with food and admission against the USD 80 cap. Totals above 80 are rejected; exactly 80 is allowed."
+  },
+  {
+    "case_id": "dev-walking-too-far",
+    "requirement_ids": ["R7", "R14"],
+    "now": "2026-12-09T16:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Haneda Airport and free now until a 6pm dinner in Shibuya. I want to walk the whole way and stop somewhere on the route."
+    ],
+    "expected_outcome": "no_feasible_result",
+    "notes": "Walking from Haneda to Shibuya takes several hours, so no walking-only plan can arrive by the 5:45 PM cutoff. The result is no feasible result; its retry question may offer another supported mode such as transit, but the agent plans with that mode only after the user agrees and does not return a plan in another mode on its own."
+  },
+  {
+    "case_id": "dev-walking-too-far-accepts-transit",
+    "requirement_ids": ["R7"],
+    "now": "2026-12-09T16:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Haneda Airport and free now until a 6pm dinner in Shibuya. I want to walk the whole way and stop somewhere on the route.",
+      "Fine, let's take the train instead."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "After the walking-only no-fit turn, the user agrees to transit. The agent now plans with public transit, and every option still meets the 5:45 PM arrival cutoff and all other hard constraints. Transit from Haneda to Shibuya takes under an hour, which leaves time for one stop."
+  },
+  {
+    "case_id": "dev-budget-without-currency",
+    "requirement_ids": ["R13"],
+    "now": "2026-12-10T11:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Berlin Hauptbahnhof and free now until a 4pm meeting at Alexanderplatz. Keep it under 40 total. S-Bahn is fine."
+    ],
+    "expected_outcome": "clarification",
+    "notes": "The budget has no currency. The agent must ask which currency rather than assuming euros from the location."
+  },
+  {
+    "case_id": "dev-currency-answered",
+    "requirement_ids": ["R13", "R3"],
+    "now": "2026-12-10T11:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Berlin Hauptbahnhof and free now until a 4pm meeting at Alexanderplatz. Keep it under 40 total. S-Bahn is fine.",
+      "Euros."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "After the user answers the currency question, the agent plans with a EUR 40 cap that covers transit, food, and admission, using the earlier details without re-asking."
+  },
+  {
+    "case_id": "dev-no-budget-still-totals",
+    "requirement_ids": ["R13", "R2"],
+    "now": "2026-12-11T12:00:00+08:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Taipei Main Station and free now until a 6pm dinner near Taipei 101. Metro is fine. Show me a few different options."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "No budget is stated, so no cap applies, but every option still shows an estimated total, and the Cheapest label goes to the lowest total among the remaining plans."
+  },
+  {
+    "case_id": "dev-impossible-budget",
+    "requirement_ids": ["R13", "R14"],
+    "now": "2026-12-12T14:00:00-05:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at JFK Airport and free now until a 7pm dinner in Midtown Manhattan. Taxis only, and my total budget is 5 US dollars."
+    ],
+    "expected_outcome": "no_feasible_result",
+    "notes": "No taxi plan from JFK to Midtown fits a USD 5 cap. The agent must say no plan fits and ask whether to try again; it must not raise the cap or switch transport on its own."
+  },
+  {
+    "case_id": "dev-retry-after-no-fit",
+    "requirement_ids": ["R11", "R13"],
+    "now": "2026-12-12T14:00:00-05:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at JFK Airport and free now until a 7pm dinner in Midtown Manhattan. Taxis only, and my total budget is 5 US dollars.",
+      "Okay, yes, try again. I can take the subway and AirTrain instead, and I'll go up to 30 dollars."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The agent waited for the user's answer after the first no-fit turn. The revised plan uses the user's new mode and USD 30 cap, and keeps the unchanged start and commitment."
+  },
+  {
+    "case_id": "dev-replan-commitment-earlier",
+    "requirement_ids": ["R11", "R8"],
+    "now": "2026-12-13T13:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Tokyo Station, free now until a 7pm dinner in Ebisu. Train is fine.",
+      "Change of plan, the dinner moved to 6pm. Can you update it?"
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The revision changes only the commitment time. Every revised option must arrive in Ebisu by 5:45 PM, and the agent keeps the start location and transport without asking again."
+  },
+  {
+    "case_id": "dev-replan-transport-change",
+    "requirement_ids": ["R11", "R7"],
+    "now": "2026-12-14T10:00:00+01:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Roma Termini, free now until a 2pm lunch near Piazza Navona. I'll take the metro and buses.",
+      "Actually I'd rather just walk everywhere. Please redo it."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "The revision changes only transport. Revised options use walking for every leg and still meet the 1:45 PM arrival cutoff."
+  },
+  {
+    "case_id": "dev-replan-second-commitment",
+    "requirement_ids": ["R1"],
+    "now": "2026-12-15T10:00:00+09:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Hakata Station in Fukuoka, free now until a 3pm meeting in Tenjin. Subway is fine.",
+      "Oh, and after that meeting I have another gap until a 7pm dinner in Nakasu. Can you plan that one too?"
+    ],
+    "expected_outcome": "clarification",
+    "notes": "Planning a second gap is outside V1. The agent should explain it plans one gap at a time and ask which gap to plan, rather than producing a two-gap itinerary."
+  },
+  {
+    "case_id": "dev-region-sao-paulo",
+    "requirement_ids": ["R12"],
+    "now": "2026-12-16T13:00:00-03:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at Praca da Se in Sao Paulo, free now until a 6pm meeting at Ibirapuera Park's main gate. Metro is fine."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "A South American location. The agent plans normally without restricting cities, and anything it cannot verify is not presented as verified."
+  },
+  {
+    "case_id": "dev-region-nairobi",
+    "requirement_ids": ["R12", "R7"],
+    "now": "2026-12-17T10:00:00+03:00",
+    "device_location": null,
+    "user_messages": [
+      "I'm at the Kenyatta International Convention Centre in Nairobi, free now until a 3pm meeting in Westlands. I'll use taxis."
+    ],
+    "expected_outcome": "validated_options",
+    "notes": "An East African location with taxi travel. Fares use a current local rate and are labeled as estimates; unverifiable places must not be presented as verified."
+  }
+]

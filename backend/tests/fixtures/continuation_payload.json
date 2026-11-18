@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "messages": [
+    {"role": "user", "text": "I'm near Shibuya station and have dinner in Ginza at 7pm. I have 3000 yen. A garden and a coffee would be nice, walking or train."},
+    {"role": "assistant", "text": "Here is one plan that fits your gap before dinner."},
+    {"role": "user", "text": "Can I leave a bit later?"}
+  ],
+  "request": {
+    "schema_version": 1,
+    "gap": {
+      "start_time": "2026-11-20T15:45:00+09:00",
+      "start_location": {
+        "label": "Synthetic Shibuya start point",
+        "latitude": 35.658,
+        "longitude": 139.7016,
+        "place_id": null
+      }
+    },
+    "commitment": {
+      "location": {
+        "label": "Synthetic Ginza dinner venue",
+        "latitude": 35.6717,
+        "longitude": 139.765,
+        "place_id": "ChIJsyntheticGinzaDinner0001"
+      },
+      "time": "2026-11-20T19:00:00+09:00",
+      "timezone": "Asia/Tokyo"
+    },
+    "budget": {"amount": "3000", "currency": "JPY"},
+    "transport_modes": ["walking", "public_transit"],
+    "constraints": ["Include one garden or park", "A coffee stop before dinner"],
+    "unresolved_questions": []
+  }
+}

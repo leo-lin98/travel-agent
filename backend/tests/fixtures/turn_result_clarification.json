@@ -1,0 +1,8 @@
+{
+  "kind": "clarification",
+  "message": "Before I plan, I need two details.",
+  "questions": [
+    {"topic": "commitment_time", "question": "What time is your dinner reservation?"},
+    {"topic": "budget_currency", "question": "Which currency is your 5000 budget in?"}
+  ]
+}

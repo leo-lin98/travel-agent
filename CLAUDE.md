@@ -8,11 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current State
 
-This repository is documentation plus an empty scaffold. Every file under `backend/`, `web/`, and `deploy/` is a 0-byte placeholder or `.gitkeep`, including `pyproject.toml`, `uv.lock`, `package.json`, and `Dockerfile`. The root `.gitignore` excludes `docs/`, `artifacts/`, `backend/tests/cassettes/`, and `.DS_Store`, so the planning documents exist locally but are not committed. Feature implementation needs explicit user authorization. The `implement-phase` skill does not grant it.
+Phases 0 and 1 are implemented in the backend: `pyproject.toml` and `uv.lock`, the typed contracts (`contracts.py`), Python feasibility checks (`feasibility.py`), option selection (`selection.py`), the offline replay script (`scripts/replay.py`), and their tests in `backend/tests/offline/`. Everything else is still a 0-byte placeholder or `.gitkeep`: `agent.py`, `api.py`, `security.py`, `telemetry.py`, `providers/`, `scripts/evaluate.py`, `backend/tests/online/`, and all of `web/` and `deploy/`, including `package.json` and `Dockerfile`. The root `.gitignore` excludes `docs/`, `artifacts/`, `backend/tests/cassettes/`, and `.DS_Store`, so the planning documents exist locally but are not committed. Feature implementation needs explicit user authorization.
 
 ## Commands
 
-No commands run yet. Phase 0 creates the Python tooling, and later phases add the rest. The forms below are targets from the phase documents, so confirm that a phase has introduced its tooling before running them. Run backend commands from the repository root.
+The offline suite, single-test, and replay commands below work now. The live checks are targets for Phases 4 and 5 and do not exist yet. `README.md` lists setup, lint, format, and type-check commands. Run backend commands from the repository root.
 
 ```bash
 # Offline suite (no network or provider keys)
