@@ -43,6 +43,8 @@ MAX_ID_CHARS: Final[int] = 64
 MAX_FEEDBACK_INPUTS: Final[int] = 20
 MAX_OPEN_INTERVALS: Final[int] = 8
 MAX_TRANSFERS: Final[int] = 10
+MIN_SUPPORTED_YEAR: Final[int] = 2000
+MAX_SUPPORTED_YEAR: Final[int] = 2100
 
 _MAX_PLACE_ID_CHARS: Final[int] = 512
 _MAX_DAY_MINUTES: Final[int] = 1440
@@ -71,7 +73,17 @@ def _require_supported_schema_version(value: object) -> object:
     return value
 
 
-def _require_unique[T](values: tuple[T, ...]) -> tuple[T, ...]:
+def _require_supported_year(value: datetime) -> datetime:
+    """Reject years outside the supported range, read in the value's own offset."""
+    if not MIN_SUPPORTED_YEAR <= value.year <= MAX_SUPPORTED_YEAR:
+        raise ValueError(
+            f"year {value.year} is outside the supported range "
+            f"{MIN_SUPPORTED_YEAR}-{MAX_SUPPORTED_YEAR}"
+        )
+    return value
+
+
+def require_unique[T](values: tuple[T, ...]) -> tuple[T, ...]:
     """Reject tuples that repeat an item."""
     duplicates = sorted(str(item) for item, count in Counter(values).items() if count > 1)
     if duplicates:
@@ -98,14 +110,15 @@ CurrencyCode = Annotated[str, StringConstraints(pattern=r"^[A-Z]{3}$")]
 IanaTimezone = Annotated[
     str, StringConstraints(min_length=1), AfterValidator(_require_iana_timezone)
 ]
+ContractDatetime = Annotated[AwareDatetime, AfterValidator(_require_supported_year)]
 _SchemaVersion = Annotated[Literal[1], BeforeValidator(_require_supported_schema_version)]
 
 _LabelText = Annotated[str, StringConstraints(min_length=1, max_length=MAX_LABEL_CHARS)]
 _ConstraintText = Annotated[str, StringConstraints(min_length=1, max_length=MAX_CONSTRAINT_CHARS)]
 _MessageText = Annotated[str, StringConstraints(min_length=1, max_length=MAX_MESSAGE_CHARS)]
-_FreeText = Annotated[str, StringConstraints(min_length=1, max_length=MAX_TEXT_CHARS)]
-_Latitude = Annotated[float, Field(ge=-90, le=90, allow_inf_nan=False)]
-_Longitude = Annotated[float, Field(ge=-180, le=180, allow_inf_nan=False)]
+FreeText = Annotated[str, StringConstraints(min_length=1, max_length=MAX_TEXT_CHARS)]
+Latitude = Annotated[float, Field(ge=-90, le=90, allow_inf_nan=False)]
+Longitude = Annotated[float, Field(ge=-180, le=180, allow_inf_nan=False)]
 _NonNegativeAmount = Annotated[Decimal, Field(ge=0, allow_inf_nan=False)]
 
 RequirementId = Literal[
@@ -214,8 +227,8 @@ class _Contract(BaseModel):
 
 class Location(_Contract):
     label: _LabelText
-    latitude: _Latitude
-    longitude: _Longitude
+    latitude: Latitude
+    longitude: Longitude
     place_id: PlaceId | None
 
 
@@ -227,7 +240,7 @@ class Money(_Contract):
 class Gap(_Contract):
     """The free time being planned; either part may still be unknown."""
 
-    start_time: AwareDatetime | None
+    start_time: ContractDatetime | None
     start_location: Location | None
 
 
@@ -235,7 +248,7 @@ class Commitment(_Contract):
     """The fixed event that ends the gap; ``timezone`` is the commitment-local zone."""
 
     location: Location | None
-    time: AwareDatetime | None
+    time: ContractDatetime | None
     timezone: IanaTimezone | None
 
 
@@ -258,7 +271,7 @@ class PlanningRequest(_Contract):
     gap: Gap
     commitment: Commitment
     budget: Budget | None
-    transport_modes: Annotated[tuple[TransportMode, ...], AfterValidator(_require_unique)]
+    transport_modes: Annotated[tuple[TransportMode, ...], AfterValidator(require_unique)]
     constraints: Annotated[tuple[_ConstraintText, ...], Field(max_length=MAX_CONSTRAINTS)]
     unresolved_questions: Annotated[
         tuple[UnresolvedQuestion, ...], Field(max_length=MAX_UNRESOLVED_QUESTIONS)
@@ -271,12 +284,30 @@ class SourceReference(_Contract):
     title: _LabelText | None
 
 
+class FallbackKey(_Contract):
+    """Identity of a stop Maps cannot find: its research result and the page's coordinates."""
+
+    result_id: Identifier
+    latitude: Latitude
+    longitude: Longitude
+
+
 class EvidenceScope(_Contract):
-    """What the evidence applies to; ``place_id`` is None for non-place evidence."""
+    """What the evidence applies to; both identities None means plan-wide evidence."""
 
     place_id: PlaceId | None
-    applies_from: AwareDatetime
-    applies_until: AwareDatetime
+    fallback_key: FallbackKey | None
+    applies_from: ContractDatetime
+    applies_until: ContractDatetime
+
+    @field_validator("fallback_key")
+    @classmethod
+    def _at_most_one_identity(
+        cls, fallback_key: FallbackKey | None, info: ValidationInfo
+    ) -> FallbackKey | None:
+        if fallback_key is not None and info.data.get("place_id") is not None:
+            raise ValueError("scope may name a place_id or a fallback_key, not both")
+        return fallback_key
 
     @field_validator("applies_until")
     @classmethod
@@ -293,8 +324,8 @@ class EvidenceScope(_Contract):
 class OpenInterval(_Contract):
     """A span during which a place is open or accessible."""
 
-    opens_at: AwareDatetime
-    closes_at: AwareDatetime
+    opens_at: ContractDatetime
+    closes_at: ContractDatetime
 
     @field_validator("closes_at")
     @classmethod
@@ -402,7 +433,7 @@ _CLAIM_KINDS_BY_TOPIC: Final[Mapping[EvidenceTopic, frozenset[str]]] = {
 }
 
 
-def _require_claim_matches_topic(claim: EvidenceClaim, info: ValidationInfo) -> EvidenceClaim:
+def require_claim_matches_topic(claim: EvidenceClaim, info: ValidationInfo) -> EvidenceClaim:
     """Reject a claim whose kind is not allowed for the evidence topic."""
     topic = info.data.get("topic")
     if isinstance(topic, EvidenceTopic) and claim.kind not in _CLAIM_KINDS_BY_TOPIC[topic]:
@@ -421,14 +452,14 @@ class SourcedFinding(_Contract):
     topic: EvidenceTopic
     claim: EvidenceClaim
     source: SourceReference
-    retrieved_at: AwareDatetime
+    retrieved_at: ContractDatetime
     scope: EvidenceScope
-    finding: _FreeText
+    finding: FreeText
 
     @field_validator("claim")
     @classmethod
     def _claim_matches_topic(cls, claim: EvidenceClaim, info: ValidationInfo) -> EvidenceClaim:
-        return _require_claim_matches_topic(claim, info)
+        return require_claim_matches_topic(claim, info)
 
 
 class Estimate(_Contract):
@@ -440,25 +471,70 @@ class Estimate(_Contract):
     claim: EvidenceClaim
     label: EstimateLabel
     scope: EvidenceScope
-    basis: _FreeText
+    basis: FreeText
     based_on: tuple[Identifier, ...]
 
     @field_validator("claim")
     @classmethod
     def _claim_matches_topic(cls, claim: EvidenceClaim, info: ValidationInfo) -> EvidenceClaim:
-        return _require_claim_matches_topic(claim, info)
+        return require_claim_matches_topic(claim, info)
 
 
 Evidence = Annotated[SourcedFinding | Estimate, Field(discriminator="kind")]
 
 
 class ActivityStop(_Contract):
-    place_id: PlaceId
+    """A planned visit identified by exactly one of a Place ID or a fallback key."""
+
+    place_id: PlaceId | None
     label: _LabelText
-    latitude: _Latitude
-    longitude: _Longitude
+    latitude: Latitude
+    longitude: Longitude
+    fallback_key: FallbackKey | None
     visit_minutes: Annotated[int, Field(ge=1, le=_MAX_DAY_MINUTES)]
     evidence_ids: tuple[Identifier, ...]
+
+    @field_validator("fallback_key")
+    @classmethod
+    def _one_identity_at_the_stop(
+        cls, fallback_key: FallbackKey | None, info: ValidationInfo
+    ) -> FallbackKey | None:
+        if "place_id" in info.data and (info.data["place_id"] is None) == (fallback_key is None):
+            raise ValueError("a stop needs exactly one of place_id and fallback_key")
+        coordinates = (info.data.get("latitude"), info.data.get("longitude"))
+        if fallback_key is not None and None not in coordinates:
+            if (fallback_key.latitude, fallback_key.longitude) != coordinates:
+                raise ValueError(
+                    f"fallback_key coordinates ({fallback_key.latitude}, "
+                    f"{fallback_key.longitude}) differ from the stop's {coordinates}"
+                )
+        return fallback_key
+
+
+def _fallback_text(key: FallbackKey) -> str:
+    """Text form of a fallback key; ``PlaceId`` excludes '@', ',', '.', so it cannot collide.
+
+    Adding ``0.0`` writes ``-0.0`` as ``0.0``, so equal coordinates give one key.
+    """
+    return f"{key.result_id}@{key.latitude + 0.0},{key.longitude + 0.0}"
+
+
+def stop_key(stop: ActivityStop) -> str:
+    """The stop's identity: its Place ID, else ``"<result_id>@<latitude>,<longitude>"``."""
+    if stop.place_id is not None:
+        return stop.place_id
+    if stop.fallback_key is None:
+        raise ValueError("stop has neither place_id nor fallback_key")
+    return _fallback_text(stop.fallback_key)
+
+
+def scope_key(scope: EvidenceScope) -> str | None:
+    """The scope's stop identity in ``stop_key`` form, or None for plan-wide evidence."""
+    if scope.place_id is not None:
+        return scope.place_id
+    if scope.fallback_key is not None:
+        return _fallback_text(scope.fallback_key)
+    return None
 
 
 class TransferWalk(_Contract):
@@ -512,11 +588,11 @@ class CheckedItinerary(_Contract):
     """Python-checked schedule and totals; ``leave_by[0]`` is the starting location."""
 
     candidate: CandidateItinerary
-    leave_by: tuple[AwareDatetime, ...]
-    arrival_at_commitment: AwareDatetime
+    leave_by: tuple[ContractDatetime, ...]
+    arrival_at_commitment: ContractDatetime
     total_cost: Money
     total_includes_estimates: bool
-    weather_warnings: tuple[_FreeText, ...]
+    weather_warnings: tuple[FreeText, ...]
 
     @field_validator("leave_by")
     @classmethod
@@ -536,24 +612,24 @@ class CheckedItinerary(_Contract):
 
 class ValidatedOption(_Contract):
     itinerary: CheckedItinerary
-    labels: Annotated[tuple[OptionLabel, ...], Field(min_length=1), AfterValidator(_require_unique)]
-    recommendation_reason: _FreeText | None
+    labels: Annotated[tuple[OptionLabel, ...], Field(min_length=1), AfterValidator(require_unique)]
+    recommendation_reason: FreeText | None
 
 
 class Recommendation(_Contract):
     """The model's chosen candidate and its required reason; selection only consumes it."""
 
     candidate_id: Identifier
-    reason: _FreeText
+    reason: FreeText
 
 
 class ConstraintFailure(_Contract):
     """One failed hard constraint with the inputs that caused it, for model repair."""
 
     constraint: ConstraintId
-    message: _FreeText
+    message: FreeText
     inputs: Annotated[
-        Mapping[_LabelText, _FreeText],
+        Mapping[_LabelText, FreeText],
         Field(min_length=1, max_length=MAX_FEEDBACK_INPUTS),
         AfterValidator(_read_only),
         PlainSerializer(dict, return_type=dict[str, str]),
@@ -567,7 +643,7 @@ class ValidationFeedback(_Contract):
 
 class Clarification(_Contract):
     kind: Literal["clarification"]
-    message: _FreeText
+    message: FreeText
     questions: Annotated[
         tuple[UnresolvedQuestion, ...], Field(min_length=1, max_length=MAX_UNRESOLVED_QUESTIONS)
     ]
@@ -575,7 +651,7 @@ class Clarification(_Contract):
 
 class ValidatedOptions(_Contract):
     kind: Literal["validated_options"]
-    message: _FreeText
+    message: FreeText
     options: Annotated[tuple[ValidatedOption, ...], Field(min_length=1, max_length=3)]
 
 
@@ -583,15 +659,15 @@ class NoFeasibleResult(_Contract):
     """No candidate passed; asks before retrying and never relaxes constraints."""
 
     kind: Literal["no_feasible_result"]
-    message: _FreeText
-    retry_question: _FreeText
+    message: FreeText
+    retry_question: FreeText
 
 
 class ExecutionFailure(_Contract):
     """The turn could not finish; this is not evidence that no itinerary exists."""
 
     kind: Literal["execution_failure"]
-    message: _FreeText
+    message: FreeText
     reason: ExecutionFailureReason
 
 
@@ -630,8 +706,8 @@ class EvalCase(_Contract):
 
     case_id: Identifier
     requirement_ids: Annotated[tuple[RequirementId, ...], Field(min_length=1)]
-    now: AwareDatetime
+    now: ContractDatetime
     device_location: Location | None
     user_messages: Annotated[tuple[_MessageText, ...], Field(min_length=1)]
     expected_outcome: TurnResultKind
-    notes: _FreeText
+    notes: FreeText

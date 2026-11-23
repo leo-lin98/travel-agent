@@ -1,0 +1,439 @@
+{
+  "clock_start": "2026-11-20T14:00:00+09:00",
+  "user_timezone": "Asia/Tokyo",
+  "limits": {
+    "max_model_calls": 20,
+    "max_tool_calls": 40,
+    "max_candidates": 5,
+    "max_evidence_items": 30,
+    "max_elapsed_seconds": 120.0
+  },
+  "continuation": {
+    "schema_version": 1,
+    "messages": [],
+    "request": {
+      "schema_version": 1,
+      "gap": {
+        "start_time": null,
+        "start_location": null
+      },
+      "commitment": {
+        "location": null,
+        "time": null,
+        "timezone": null
+      },
+      "budget": null,
+      "transport_modes": [],
+      "constraints": [],
+      "unresolved_questions": []
+    }
+  },
+  "web": [
+    {
+      "query": "Synthetic Quiet Garden",
+      "pages": [
+        {
+          "url": "https://garden.example.org/visit",
+          "title": "Synthetic Quiet Garden - Visit",
+          "content": "Open daily 09:00-21:00. Admission JPY 500. A quiet walled garden.",
+          "retrieved_at": "2026-11-20T14:30:00+09:00"
+        },
+        {
+          "url": "https://guide.example.com/quiet-garden",
+          "title": null,
+          "content": "Visitors usually spend about an hour.",
+          "retrieved_at": "2026-11-20T14:30:00+09:00"
+        }
+      ]
+    },
+    {
+      "query": "Synthetic Metro fare Garden-mae to Ginza",
+      "pages": [
+        {
+          "url": "https://metro.example.jp/fares",
+          "title": "Synthetic Metro - Fares",
+          "content": "Garden-mae to Ginza: adult IC fare JPY 180.",
+          "retrieved_at": "2026-11-20T14:30:00+09:00"
+        }
+      ]
+    }
+  ],
+  "places": [
+    {
+      "query": "Synthetic Quiet Garden",
+      "place": {
+        "place_id": "ChIJsyntheticQuietGarden01",
+        "label": "Synthetic Quiet Garden",
+        "latitude": 35.6764,
+        "longitude": 139.6993,
+        "maps_url": "https://maps.google.com/?q=place_id:ChIJsyntheticQuietGarden01",
+        "retrieved_at": "2026-11-20T14:35:00+09:00",
+        "opening": {
+          "claim": {
+            "kind": "opening_access",
+            "status": "open",
+            "open_intervals": [
+              {
+                "opens_at": "2026-11-20T09:00:00+09:00",
+                "closes_at": "2026-11-20T21:00:00+09:00"
+              }
+            ]
+          },
+          "applies_from": "2026-11-20T00:00:00+09:00",
+          "applies_until": "2026-11-20T23:59:00+09:00"
+        }
+      }
+    }
+  ],
+  "routes": [
+    {
+      "origin": {
+        "label": "Synthetic Shibuya start",
+        "latitude": 35.658,
+        "longitude": 139.7016,
+        "place_id": null
+      },
+      "destination": {
+        "label": "Synthetic Quiet Garden",
+        "latitude": 35.6764,
+        "longitude": 139.6993,
+        "place_id": "ChIJsyntheticQuietGarden01"
+      },
+      "mode": "walking",
+      "route": {
+        "duration_minutes": 20,
+        "distance_meters": 1500,
+        "transfers": [],
+        "transit": []
+      }
+    },
+    {
+      "origin": {
+        "label": "Synthetic Quiet Garden",
+        "latitude": 35.6764,
+        "longitude": 139.6993,
+        "place_id": "ChIJsyntheticQuietGarden01"
+      },
+      "destination": {
+        "label": "Synthetic Ginza dinner",
+        "latitude": 35.6717,
+        "longitude": 139.765,
+        "place_id": "ChIJsyntheticGinzaDinner0001"
+      },
+      "mode": "public_transit",
+      "route": {
+        "duration_minutes": 30,
+        "distance_meters": 5000,
+        "transfers": [
+          {
+            "available_minutes": 5,
+            "walk_minutes": 3
+          }
+        ],
+        "transit": [
+          {
+            "line": "Synthetic Metro Line",
+            "board_station": "Garden-mae",
+            "alight_station": "Ginza"
+          }
+        ]
+      }
+    }
+  ],
+  "weather": [
+    {
+      "point": {
+        "label": "Synthetic Shibuya start",
+        "latitude": 35.658,
+        "longitude": 139.7016,
+        "place_id": null
+      },
+      "periods": [
+        {
+          "applies_from": "2026-11-20T17:00:00+09:00",
+          "applies_until": "2026-11-20T19:00:00+09:00",
+          "rain": true,
+          "source_url": "https://forecast.example.com/tokyo",
+          "retrieved_at": "2026-11-20T14:40:00+09:00"
+        }
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "user_message": "I'm free from 3pm near Shibuya and have dinner in Ginza at 7pm. I have 3000 to spend and want something relaxing.",
+      "replies": [
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t1-now",
+              "name": "get_datetime",
+              "arguments": "{}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t1-update",
+              "name": "update_request",
+              "arguments": "{\"request\": {\"schema_version\": 1, \"gap\": {\"start_time\": \"2026-11-20T15:00:00+09:00\", \"start_location\": {\"label\": \"Synthetic Shibuya start\", \"latitude\": 35.658, \"longitude\": 139.7016, \"place_id\": null}}, \"commitment\": {\"location\": {\"label\": \"Synthetic Ginza dinner\", \"latitude\": 35.6717, \"longitude\": 139.765, \"place_id\": \"ChIJsyntheticGinzaDinner0001\"}, \"time\": \"2026-11-20T19:00:00+09:00\", \"timezone\": \"Asia/Tokyo\"}, \"budget\": {\"amount\": \"3000\", \"currency\": null}, \"transport_modes\": [], \"constraints\": [], \"unresolved_questions\": [{\"topic\": \"budget_currency\", \"question\": \"Which currency is your 3000 budget in?\"}, {\"topic\": \"other\", \"question\": \"What makes a place relaxing for you?\"}]}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t1-weather",
+              "name": "get_weather",
+              "arguments": "{\"point\": {\"kind\": \"start\"}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t1-clarify",
+              "name": "ask_clarification",
+              "arguments": "{\"message\": \"Two quick questions before I plan.\", \"questions\": [{\"topic\": \"budget_currency\", \"question\": \"Which currency is your 3000 budget in?\"}, {\"topic\": \"other\", \"question\": \"What makes a place relaxing for you?\"}]}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "user_message": "Yen. Relaxing means a quiet garden. Walking or the train is fine.",
+      "replies": [
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-update",
+              "name": "update_request",
+              "arguments": "{\"request\": {\"schema_version\": 1, \"gap\": {\"start_time\": \"2026-11-20T15:00:00+09:00\", \"start_location\": {\"label\": \"Synthetic Shibuya start\", \"latitude\": 35.658, \"longitude\": 139.7016, \"place_id\": null}}, \"commitment\": {\"location\": {\"label\": \"Synthetic Ginza dinner\", \"latitude\": 35.6717, \"longitude\": 139.765, \"place_id\": \"ChIJsyntheticGinzaDinner0001\"}, \"time\": \"2026-11-20T19:00:00+09:00\", \"timezone\": \"Asia/Tokyo\"}, \"budget\": {\"amount\": \"3000\", \"currency\": \"JPY\"}, \"transport_modes\": [\"walking\", \"public_transit\"], \"constraints\": [\"A quiet garden\"], \"unresolved_questions\": []}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-find",
+              "name": "find_place",
+              "arguments": "{\"query\": \"Synthetic Quiet Garden\"}"
+            },
+            {
+              "call_id": "t2-search",
+              "name": "web_search",
+              "arguments": "{\"query\": \"Synthetic Quiet Garden\"}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-hours",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-garden-hours\", \"result_id\": \"web-1\", \"source_kind\": \"official_website\", \"topic\": \"opening_access\", \"claim\": {\"kind\": \"opening_access\", \"status\": \"open\", \"open_intervals\": [{\"opens_at\": \"2026-11-20T09:00:00+09:00\", \"closes_at\": \"2026-11-20T21:00:00+09:00\"}]}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Open daily 09:00-21:00.\"}}"
+            },
+            {
+              "call_id": "t2-duration",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-garden-duration\", \"result_id\": \"web-2\", \"source_kind\": \"other_web\", \"topic\": \"visit_duration\", \"claim\": {\"kind\": \"visit_duration\", \"minutes\": 60}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Visitors usually spend about an hour.\"}}"
+            },
+            {
+              "call_id": "t2-constraint",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-garden-constraint\", \"result_id\": \"web-1\", \"source_kind\": \"official_website\", \"topic\": \"constraint\", \"claim\": {\"kind\": \"constraint\", \"constraint_index\": 0}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"A quiet walled garden.\"}}"
+            },
+            {
+              "call_id": "t2-admission",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-admission\", \"result_id\": \"web-1\", \"source_kind\": \"official_website\", \"topic\": \"cost\", \"claim\": {\"kind\": \"cost_amount\", \"amount\": {\"amount\": \"500\", \"currency\": \"JPY\"}}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Admission JPY 500.\"}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-route-in",
+              "name": "get_route",
+              "arguments": "{\"origin\": {\"kind\": \"start\"}, \"destination\": {\"kind\": \"place\", \"place_id\": \"ChIJsyntheticQuietGarden01\"}, \"mode\": \"walking\"}"
+            },
+            {
+              "call_id": "t2-route-out",
+              "name": "get_route",
+              "arguments": "{\"origin\": {\"kind\": \"place\", \"place_id\": \"ChIJsyntheticQuietGarden01\"}, \"destination\": {\"kind\": \"commitment\"}, \"mode\": \"public_transit\"}"
+            },
+            {
+              "call_id": "t2-fare-search",
+              "name": "web_search",
+              "arguments": "{\"query\": \"Synthetic Metro fare Garden-mae to Ginza\"}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-fare",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-fare\", \"result_id\": \"web-3\", \"source_kind\": \"official_website\", \"topic\": \"cost\", \"claim\": {\"kind\": \"cost_amount\", \"amount\": {\"amount\": \"180\", \"currency\": \"JPY\"}}, \"scope\": {\"place_id\": null, \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Garden-mae to Ginza: JPY 180.\"}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-check-long",
+              "name": "check_candidate",
+              "arguments": "{\"candidate\": {\"candidate_id\": \"cand-garden-long\", \"stops\": [{\"place_id\": \"ChIJsyntheticQuietGarden01\", \"label\": \"Synthetic Quiet Garden\", \"latitude\": 35.6764, \"longitude\": 139.6993, \"fallback_key\": null, \"visit_minutes\": 200, \"evidence_ids\": [\"ev-garden-constraint\"]}], \"legs\": [{\"mode\": \"walking\", \"duration_minutes\": 20, \"distance_meters\": 1500, \"transfers\": [], \"evidence_ids\": []}, {\"mode\": \"public_transit\", \"duration_minutes\": 30, \"distance_meters\": 5000, \"transfers\": [{\"available_minutes\": 5, \"walk_minutes\": 3}], \"evidence_ids\": [\"ev-fare\"]}], \"costs\": [{\"description\": \"Garden admission\", \"amount\": {\"amount\": \"500\", \"currency\": \"JPY\"}, \"evidence_ids\": [\"ev-admission\"]}]}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-check",
+              "name": "check_candidate",
+              "arguments": "{\"candidate\": {\"candidate_id\": \"cand-garden\", \"stops\": [{\"place_id\": \"ChIJsyntheticQuietGarden01\", \"label\": \"Synthetic Quiet Garden\", \"latitude\": 35.6764, \"longitude\": 139.6993, \"fallback_key\": null, \"visit_minutes\": 90, \"evidence_ids\": [\"ev-garden-constraint\"]}], \"legs\": [{\"mode\": \"walking\", \"duration_minutes\": 20, \"distance_meters\": 1500, \"transfers\": [], \"evidence_ids\": []}, {\"mode\": \"public_transit\", \"duration_minutes\": 30, \"distance_meters\": 5000, \"transfers\": [{\"available_minutes\": 5, \"walk_minutes\": 3}], \"evidence_ids\": [\"ev-fare\"]}], \"costs\": [{\"description\": \"Garden admission\", \"amount\": {\"amount\": \"500\", \"currency\": \"JPY\"}, \"evidence_ids\": [\"ev-admission\"]}]}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t2-submit",
+              "name": "submit_options",
+              "arguments": "{\"message\": \"Here is a quiet garden visit before dinner.\", \"recommendation\": {\"candidate_id\": \"cand-garden\", \"reason\": \"A quiet garden that fits your time and budget.\"}, \"candidate_ids\": [\"cand-garden\"]}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "user_message": "My dinner moved to 5:30pm. Can we keep the garden?",
+      "replies": [
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-update",
+              "name": "update_request",
+              "arguments": "{\"request\": {\"schema_version\": 1, \"gap\": {\"start_time\": \"2026-11-20T15:00:00+09:00\", \"start_location\": {\"label\": \"Synthetic Shibuya start\", \"latitude\": 35.658, \"longitude\": 139.7016, \"place_id\": null}}, \"commitment\": {\"location\": {\"label\": \"Synthetic Ginza dinner\", \"latitude\": 35.6717, \"longitude\": 139.765, \"place_id\": \"ChIJsyntheticGinzaDinner0001\"}, \"time\": \"2026-11-20T17:30:00+09:00\", \"timezone\": \"Asia/Tokyo\"}, \"budget\": {\"amount\": \"3000\", \"currency\": \"JPY\"}, \"transport_modes\": [\"walking\", \"public_transit\"], \"constraints\": [\"A quiet garden\"], \"unresolved_questions\": []}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-check-old",
+              "name": "check_candidate",
+              "arguments": "{\"candidate\": {\"candidate_id\": \"cand-garden\", \"stops\": [{\"place_id\": \"ChIJsyntheticQuietGarden01\", \"label\": \"Synthetic Quiet Garden\", \"latitude\": 35.6764, \"longitude\": 139.6993, \"fallback_key\": null, \"visit_minutes\": 90, \"evidence_ids\": [\"ev-garden-constraint\"]}], \"legs\": [{\"mode\": \"walking\", \"duration_minutes\": 20, \"distance_meters\": 1500, \"transfers\": [], \"evidence_ids\": []}, {\"mode\": \"public_transit\", \"duration_minutes\": 30, \"distance_meters\": 5000, \"transfers\": [{\"available_minutes\": 5, \"walk_minutes\": 3}], \"evidence_ids\": [\"ev-fare\"]}], \"costs\": [{\"description\": \"Garden admission\", \"amount\": {\"amount\": \"500\", \"currency\": \"JPY\"}, \"evidence_ids\": [\"ev-admission\"]}]}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-find",
+              "name": "find_place",
+              "arguments": "{\"query\": \"Synthetic Quiet Garden\"}"
+            },
+            {
+              "call_id": "t3-search",
+              "name": "web_search",
+              "arguments": "{\"query\": \"Synthetic Quiet Garden\"}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-hours",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-garden-hours\", \"result_id\": \"web-1\", \"source_kind\": \"official_website\", \"topic\": \"opening_access\", \"claim\": {\"kind\": \"opening_access\", \"status\": \"open\", \"open_intervals\": [{\"opens_at\": \"2026-11-20T09:00:00+09:00\", \"closes_at\": \"2026-11-20T21:00:00+09:00\"}]}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Open daily 09:00-21:00.\"}}"
+            },
+            {
+              "call_id": "t3-duration",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-garden-duration\", \"result_id\": \"web-2\", \"source_kind\": \"other_web\", \"topic\": \"visit_duration\", \"claim\": {\"kind\": \"visit_duration\", \"minutes\": 60}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Visitors usually spend about an hour.\"}}"
+            },
+            {
+              "call_id": "t3-constraint",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-garden-constraint\", \"result_id\": \"web-1\", \"source_kind\": \"official_website\", \"topic\": \"constraint\", \"claim\": {\"kind\": \"constraint\", \"constraint_index\": 0}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"A quiet walled garden.\"}}"
+            },
+            {
+              "call_id": "t3-admission",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-admission\", \"result_id\": \"web-1\", \"source_kind\": \"official_website\", \"topic\": \"cost\", \"claim\": {\"kind\": \"cost_amount\", \"amount\": {\"amount\": \"500\", \"currency\": \"JPY\"}}, \"scope\": {\"place_id\": \"ChIJsyntheticQuietGarden01\", \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Admission JPY 500.\"}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-route-in",
+              "name": "get_route",
+              "arguments": "{\"origin\": {\"kind\": \"start\"}, \"destination\": {\"kind\": \"place\", \"place_id\": \"ChIJsyntheticQuietGarden01\"}, \"mode\": \"walking\"}"
+            },
+            {
+              "call_id": "t3-route-out",
+              "name": "get_route",
+              "arguments": "{\"origin\": {\"kind\": \"place\", \"place_id\": \"ChIJsyntheticQuietGarden01\"}, \"destination\": {\"kind\": \"commitment\"}, \"mode\": \"public_transit\"}"
+            },
+            {
+              "call_id": "t3-fare-search",
+              "name": "web_search",
+              "arguments": "{\"query\": \"Synthetic Metro fare Garden-mae to Ginza\"}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-fare",
+              "name": "record_evidence",
+              "arguments": "{\"evidence\": {\"kind\": \"sourced_finding\", \"evidence_id\": \"ev-fare\", \"result_id\": \"web-3\", \"source_kind\": \"official_website\", \"topic\": \"cost\", \"claim\": {\"kind\": \"cost_amount\", \"amount\": {\"amount\": \"180\", \"currency\": \"JPY\"}}, \"scope\": {\"place_id\": null, \"fallback_key\": null, \"applies_from\": \"2026-11-20T00:00:00+09:00\", \"applies_until\": \"2026-11-20T23:59:00+09:00\"}, \"finding\": \"Garden-mae to Ginza: JPY 180.\"}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-check",
+              "name": "check_candidate",
+              "arguments": "{\"candidate\": {\"candidate_id\": \"cand-garden-revised\", \"stops\": [{\"place_id\": \"ChIJsyntheticQuietGarden01\", \"label\": \"Synthetic Quiet Garden\", \"latitude\": 35.6764, \"longitude\": 139.6993, \"fallback_key\": null, \"visit_minutes\": 60, \"evidence_ids\": [\"ev-garden-constraint\"]}], \"legs\": [{\"mode\": \"walking\", \"duration_minutes\": 20, \"distance_meters\": 1500, \"transfers\": [], \"evidence_ids\": []}, {\"mode\": \"public_transit\", \"duration_minutes\": 30, \"distance_meters\": 5000, \"transfers\": [{\"available_minutes\": 5, \"walk_minutes\": 3}], \"evidence_ids\": [\"ev-fare\"]}], \"costs\": [{\"description\": \"Garden admission\", \"amount\": {\"amount\": \"500\", \"currency\": \"JPY\"}, \"evidence_ids\": [\"ev-admission\"]}]}}"
+            }
+          ]
+        },
+        {
+          "kind": "tool_calls",
+          "calls": [
+            {
+              "call_id": "t3-submit",
+              "name": "submit_options",
+              "arguments": "{\"message\": \"Updated for your 17:30 dinner: a shorter garden visit.\", \"recommendation\": {\"candidate_id\": \"cand-garden-revised\", \"reason\": \"A quiet garden that fits your time and budget.\"}, \"candidate_ids\": [\"cand-garden-revised\"]}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

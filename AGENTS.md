@@ -48,11 +48,11 @@ This repository is currently a minimal scaffold for `travel-agent`:
 - `docs/architecture.md`: minimal agent loop, Python authority, tool/data boundaries, and integration gates.
 - `docs/hosting.md`: selected Render and Langfuse Cloud setup, accepted cold-start tradeoff, and deferred database research.
 
-The files and directories for `backend/`, `web/`, `deploy/`, and `artifacts/` are scaffolded as documented in `docs/plan.md`, with empty implementation files and `.gitkeep` markers preserving empty folders. Source files and manifests are placeholders; no feature implementation, tests, assets, or configured development commands exist yet. The user authorized creating the listed files, not implementing the planned phases. Document new directories in `README.md`. Consult `docs/requirements.md`, `docs/plan.md`, and `docs/architecture.md` before architecture changes.
+The files and directories for `backend/`, `web/`, `deploy/`, and `artifacts/` are scaffolded as documented in `docs/plan.md`, with `.gitkeep` markers preserving empty folders. Phases 0–2 are implemented in `backend/`: contracts, feasibility, selection, the agent loop (`agent.py`), the replay script, and offline tests. The remaining backend modules (`api.py`, `security.py`, `telemetry.py`, `providers/`, `scripts/evaluate.py`), `backend/tests/online/`, `web/`, and `deploy/` are still empty placeholders. Each later phase needs explicit user authorization. Document new directories in `README.md`. Consult `docs/requirements.md`, `docs/plan.md`, and `docs/architecture.md` before architecture changes.
 
 ## Build, Test, and Development Commands
 
-No build, test, lint, or local development commands are configured. Do not assume `npm test`, `pytest`, or another framework is available.
+Backend commands are configured with uv and run from the repository root; `README.md` lists setup, offline test, replay, lint, format, and type-check commands. No frontend commands are configured; do not assume `npm test` or another web tool is available.
 
 Useful checks from the repository root:
 
@@ -64,17 +64,17 @@ When introducing tooling, declare dependencies in the appropriate project manife
 
 ## Coding Style & Naming Conventions
 
-Python is selected; formatting, linting, indentation, and naming conventions are not yet established. Match surrounding style when code exists.
+Python 3.14 uses ruff for lint and format (line length 100) and pyright in strict mode, configured in `backend/pyproject.toml`. Frontend conventions are not yet established. Match surrounding style.
 
 Keep changes focused. Prefer small, single-purpose functions and explicit parameters. Avoid mutating inputs or global state, speculative abstractions, and unrelated refactors. Validate external input at system boundaries and report actionable errors.
 
 ## Testing Guidelines
 
-Pytest is selected but not configured; no coverage threshold exists. Add requirement-derived tests for new core logic, including meaningful failure cases. Prefer fast tests for pure functions and integration tests for external boundaries. Document test naming and execution commands when configuring tests. Run applicable lint and test checks before requesting review.
+Pytest is configured in `backend/pyproject.toml`. Offline tests live in `backend/tests/offline/`, block network access with `pytest-socket`, and turn warnings into errors; no coverage threshold exists. Add requirement-derived tests for new core logic, including meaningful failure cases. Prefer fast tests for pure functions and integration tests for external boundaries. Document test naming and execution commands when configuring tests. Run applicable lint and test checks before requesting review.
 
 ## Commit & Pull Request Guidelines
 
-Git history contains only `Initial commit`; no commit convention is established. Use concise, imperative commit subjects describing the change. Agents must not commit, push, merge, or publish without explicit authorization.
+No formal commit convention is established; existing history uses short imperative subjects. Use concise, imperative commit subjects describing the change. Agents must not commit, push, merge, or publish without explicit authorization.
 
 Pull requests should explain the problem, scope, key decisions, and verification results. Link relevant issues and include screenshots for visual changes.
 

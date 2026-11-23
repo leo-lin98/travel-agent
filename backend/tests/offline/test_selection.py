@@ -65,6 +65,7 @@ def stop(place_id: str, label: str) -> Doc:
         "label": label,
         "latitude": 35.66,
         "longitude": 139.70,
+        "fallback_key": None,
         "visit_minutes": 30,
         "evidence_ids": [],
     }
@@ -488,6 +489,102 @@ def test_selection_errors_share_a_base_class() -> None:
     ):
         assert issubclass(error, SelectionError)
     assert issubclass(SelectionError, ValueError)
+
+
+# --- stops with no Place ID (user decision D4: distinctness uses the fallback key) ----
+
+
+def fallback_stop(result_id: str, latitude: float, longitude: float, label: str) -> Doc:
+    key: Doc = {"result_id": result_id, "latitude": latitude, "longitude": longitude}
+    return {
+        "place_id": None,
+        "label": label,
+        "latitude": latitude,
+        "longitude": longitude,
+        "fallback_key": key,
+        "visit_minutes": 30,
+        "evidence_ids": [],
+    }
+
+
+def stops_plan(candidate_id: str, stops: list[Doc], minutes: int, total: str) -> CheckedItinerary:
+    """A walking plan over `stops`; the first leg carries all travel minutes and 1 km."""
+    legs = [leg("walking", minutes, 1000)] + [leg("walking", 0, 0) for _ in stops]
+    return checked_from(candidate_id, stops, legs, total, "JPY")
+
+
+SPRING = fallback_stop("web-1", 35.689, 139.692, "Synthetic Hidden Spring")
+
+
+def test_plans_with_the_same_fallback_stops_are_one_plan() -> None:
+    renamed = fallback_stop("web-1", 35.689, 139.692, "Hidden spring (other name)")
+    checked = (
+        stops_plan("cand-spring", [SPRING], 30, "500"),
+        stops_plan("cand-spring-again", [renamed], 20, "100"),
+    )
+
+    options = select_options(checked, recommend("cand-spring"))
+
+    assert ids(options) == ["cand-spring"]
+
+
+def test_fallback_stops_in_another_order_are_one_plan() -> None:
+    checked = (
+        stops_plan("cand-a", [SPRING, stop(P1, "Place one")], 30, "500"),
+        stops_plan("cand-b", [stop(P1, "Place one"), SPRING], 20, "100"),
+    )
+
+    assert ids(select_options(checked, recommend("cand-a"))) == ["cand-a"]
+
+
+@pytest.mark.parametrize(
+    "other",
+    [
+        pytest.param(fallback_stop("web-2", 35.689, 139.692, "Spring"), id="other-result"),
+        pytest.param(fallback_stop("web-1", 35.6891, 139.692, "Spring"), id="other-latitude"),
+        pytest.param(fallback_stop("web-1", 35.689, 139.6921, "Spring"), id="other-longitude"),
+        pytest.param(
+            {
+                **stop("ChIJsyntheticHiddenSpring1", "Spring"),
+                "latitude": 35.689,
+                "longitude": 139.692,
+            },
+            id="place-id-at-same-coordinates",
+        ),
+    ],
+)
+def test_fallback_key_differences_make_plans_distinct(other: Doc) -> None:
+    checked = (
+        stops_plan("cand-spring", [SPRING], 30, "500"),
+        stops_plan("cand-other", [other], 20, "100"),
+    )
+
+    options = select_options(checked, recommend("cand-spring"))
+
+    assert ids(options) == ["cand-spring", "cand-other"]
+    assert labels(options) == [(AI,), (CHEAPEST,)]
+
+
+def test_fallback_stops_differing_only_in_signed_zero_are_one_plan() -> None:
+    checked = (
+        stops_plan("cand-zero", [fallback_stop("web-1", 0.0, 1.0, "Spring")], 30, "500"),
+        stops_plan("cand-minus-zero", [fallback_stop("web-1", -0.0, 1.0, "Spring")], 20, "100"),
+    )
+
+    assert ids(select_options(checked, recommend("cand-zero"))) == ["cand-zero"]
+
+
+def test_cheapest_tie_sorts_fallback_keys_with_place_ids() -> None:
+    checked = (
+        plan("cand-ai", [P3], 10, 100, "900"),
+        stops_plan("cand-spring", [SPRING], 30, "500"),
+        stops_plan("cand-place", [stop(P2, "Place two")], 30, "500"),
+    )
+
+    options = select_options(checked, recommend("cand-ai"))
+
+    # "ChIJ..." sorts before "web-1@35.689,139.692", so the Place-ID plan wins the tie.
+    assert ids(options)[:2] == ["cand-ai", "cand-place"]
 
 
 # --- replay script on the deadline-boundary case (AC10) ------------------------------

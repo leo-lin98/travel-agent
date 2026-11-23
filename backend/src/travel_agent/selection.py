@@ -6,9 +6,10 @@ then Cheapest of the remaining plans, then Best travel of the remaining plans. E
 option carries one label, and fewer options are returned when fewer distinct plans
 exist.
 
-Two itineraries are the same plan when they visit the same set of activity-stop Place
-IDs (ledger O4); labels, coordinates, stop order, and transport are ignored. Each slot
-skips every itinerary whose plan was already shown, using the plan key as a lookup.
+Two itineraries are the same plan when they visit the same set of activity-stop keys
+(ledger O4): the Place ID, or the fallback key for a stop Maps cannot find (decision
+2026-11-18); labels, coordinates, stop order, and transport are ignored. Each slot skips
+every itinerary whose plan was already shown, using the plan key as a lookup.
 """
 
 from collections import Counter
@@ -21,6 +22,7 @@ from travel_agent.contracts import (
     OptionLabel,
     Recommendation,
     ValidatedOption,
+    stop_key,
 )
 
 MAX_SELECTION_CANDIDATES: Final[int] = 20
@@ -59,8 +61,8 @@ class MixedCurrencyError(SelectionError):
 
 
 def _plan_key(itinerary: CheckedItinerary) -> PlanKey:
-    """The set of activity-stop Place IDs; equal keys mean the same plan (O4)."""
-    return frozenset(stop.place_id for stop in itinerary.candidate.stops)
+    """The set of activity-stop keys (Place ID or fallback key); equal keys mean one plan."""
+    return frozenset(stop_key(stop) for stop in itinerary.candidate.stops)
 
 
 def _sorted_places(itinerary: CheckedItinerary) -> tuple[str, ...]:
@@ -189,13 +191,13 @@ def select_options(
 ) -> tuple[ValidatedOption, ...]:
     """Pick up to three distinct options in slot order: AI, Cheapest, Best travel.
 
-    Itineraries with the same set of activity-stop Place IDs are one plan (O4). Each
+    Itineraries with the same set of activity-stop keys (``stop_key``) are one plan (O4). Each
     slot considers only itineraries whose plan has not been shown yet, and each option
     carries one label (D4).
 
     1. AI Recommended: the itinerary the recommendation names, carrying its reason.
     2. Cheapest (RC7): lowest total cost; ties go to fewer travel minutes, then shorter
-       distance, then the sorted activity Place IDs.
+       distance, then the sorted activity stop keys.
     3. Best travel (R2, D3, RC8): lowest 50/50 travel score. Over the eligible
        itineraries only (every member of every unused plan), total distance ``d`` and
        total travel minutes ``t`` (all legs through the commitment) are rescaled to
@@ -207,10 +209,10 @@ def select_options(
 
        Arithmetic is exact (``Fraction``), so equal scores compare equal. Ties go to
        fewer travel minutes, then shorter distance, then lower total cost, then the
-       sorted activity Place IDs.
+       sorted activity stop keys.
 
     In both tie chains a final ``candidate_id`` key only picks a representative within
-    one plan, since members of a plan share their Place IDs.
+    one plan, since members of a plan share their stop keys.
 
     Input checks run first, in order, raising a ``SelectionError`` subclass: too many
     itineraries, duplicate ids, mixed total currencies, recommendation not found.

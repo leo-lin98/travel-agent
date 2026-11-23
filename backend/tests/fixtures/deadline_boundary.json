@@ -45,6 +45,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineGarden000001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -72,6 +73,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineGarden000001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -93,6 +95,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineGarden000001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -117,6 +120,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineMuseum000001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -144,6 +148,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineMuseum000001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -165,6 +170,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineMuseum000001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -189,6 +195,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineGrandHotel01",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -211,6 +218,7 @@
       "label": "ai_best_guess",
       "scope": {
         "place_id": "ChIJdeadlineGrandHotel01",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -233,6 +241,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineGrandHotel01",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -257,6 +266,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": "ChIJdeadlineHotelCafe001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -279,6 +289,7 @@
       "label": "estimate",
       "scope": {
         "place_id": "ChIJdeadlineHotelCafe001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -296,6 +307,7 @@
       "label": "ai_best_guess",
       "scope": {
         "place_id": "ChIJdeadlineHotelCafe001",
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -321,6 +333,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": null,
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -345,6 +358,7 @@
       "retrieved_at": "2026-11-20T14:30:00+09:00",
       "scope": {
         "place_id": null,
+        "fallback_key": null,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00"
       },
@@ -373,6 +387,7 @@
           "label": "Synthetic Deadline Garden",
           "latitude": 35.67,
           "longitude": 139.71,
+          "fallback_key": null,
           "visit_minutes": 120,
           "evidence_ids": [
             "ev-garden-hours",
@@ -424,6 +439,7 @@
           "label": "Synthetic Deadline Garden",
           "latitude": 35.67,
           "longitude": 139.71,
+          "fallback_key": null,
           "visit_minutes": 121,
           "evidence_ids": [
             "ev-garden-hours",
@@ -475,6 +491,7 @@
           "label": "Synthetic Deadline Museum",
           "latitude": 35.67,
           "longitude": 139.71,
+          "fallback_key": null,
           "visit_minutes": 60,
           "evidence_ids": [
             "ev-museum-hours",
@@ -521,6 +538,7 @@
           "label": "Synthetic Deadline Museum",
           "latitude": 35.67,
           "longitude": 139.71,
+          "fallback_key": null,
           "visit_minutes": 60,
           "evidence_ids": [
             "ev-museum-hours",
@@ -567,6 +585,7 @@
           "label": "Lobby Cafe at Synthetic Grand Hotel",
           "latitude": 35.67,
           "longitude": 139.71,
+          "fallback_key": null,
           "visit_minutes": 45,
           "evidence_ids": [
             "ev-cafe-hours",
@@ -611,6 +630,7 @@
           "label": "Synthetic Grand Hotel",
           "latitude": 35.67,
           "longitude": 139.71,
+          "fallback_key": null,
           "visit_minutes": 30,
           "evidence_ids": [
             "ev-hotel-hours",

@@ -118,7 +118,12 @@ def request_doc() -> Doc:
 
 
 def scope(place_id: str | None, applies_from: str, applies_until: str) -> Doc:
-    return {"place_id": place_id, "applies_from": applies_from, "applies_until": applies_until}
+    return {
+        "place_id": place_id,
+        "fallback_key": None,
+        "applies_from": applies_from,
+        "applies_until": applies_until,
+    }
 
 
 def sourced(evidence_id: str, topic: str, kind: str, evidence_scope: Doc, claim: Doc) -> Doc:
@@ -207,6 +212,7 @@ def stop(place_id: str, visit_minutes: int, evidence_ids: list[str]) -> Doc:
         "label": f"Stop {place_id[-4:]}",
         "latitude": 35.66,
         "longitude": 139.70,
+        "fallback_key": None,
         "visit_minutes": visit_minutes,
         "evidence_ids": evidence_ids,
     }
@@ -1506,3 +1512,95 @@ def test_phase_0_sample_itinerary_checks_to_its_sample_result() -> None:
     assert result.total_cost == sample.total_cost
     assert result.total_includes_estimates is True
     assert len(result.weather_warnings) == 1
+
+
+# --- stops with no Place ID (user decision D4, 2026-11-18) -------------------------
+# A fallback stop is identified by the research result it came from plus coordinates read
+# from that page. Its opening/access needs an applicable official source: no Maps fallback.
+
+FALLBACK_KEY: Doc = {"result_id": "web-1", "latitude": 35.66, "longitude": 139.70}
+FALLBACK_STOP_KEY = "web-1@35.66,139.7"
+
+
+def as_fallback_stop(candidate: Doc, key: Doc) -> Doc:
+    """Return `candidate` with stop 0 identified by `key` instead of a Place ID."""
+    without_place = replaced(candidate, ("stops", 0, "place_id"), None)
+    return cast(Doc, replaced(without_place, ("stops", 0, "fallback_key"), key))
+
+
+def scoped_to(item: Doc, key: Doc) -> Doc:
+    """Return evidence `item` scoped to the fallback key instead of a Place ID."""
+    evidence_scope = cast(Doc, item["scope"])
+    return {**item, "scope": {**evidence_scope, "place_id": None, "fallback_key": key}}
+
+
+def fallback_park() -> Doc:
+    return as_fallback_stop(park_candidate(60, 30, 30), FALLBACK_KEY)
+
+
+def test_fallback_stop_with_an_official_source_is_checked_like_a_place() -> None:
+    evidence = [scoped_to(item, FALLBACK_KEY) for item in park_evidence(WIDE_OPEN)]
+
+    result = checked(run(request_doc(), fallback_park(), evidence))
+
+    assert result.candidate.stops[0].place_id is None
+    assert result.total_cost.amount == Decimal("500")
+    assert result.leave_by == (tokyo(16, 45), tokyo(18, 15))
+
+
+@pytest.mark.parametrize("kind", [MAPS, OTHER_WEB])
+def test_fallback_stop_without_an_official_opening_source_is_rejected(kind: str) -> None:
+    evidence = [
+        scoped_to(opening("ev-park-hours", kind, PARK, open_claim(WIDE_OPEN)), FALLBACK_KEY),
+        scoped_to(duration("ev-park-duration", OTHER_WEB, PARK, 60), FALLBACK_KEY),
+        scoped_to(price("ev-park-price", PARK, "500", "JPY"), FALLBACK_KEY),
+    ]
+
+    result = run(request_doc(), fallback_park(), evidence)
+
+    failure = only_failure(result, ConstraintId.OPENING_ACCESS)
+    assert failure.inputs["reason"] == "unverified"
+    assert failure.inputs["stop_index"] == "0"
+    assert failure.inputs["place_id"] == FALLBACK_STOP_KEY
+
+
+def test_maps_hours_do_not_override_an_official_source_for_a_fallback_stop() -> None:
+    evidence = [
+        scoped_to(opening("ev-maps-hours", MAPS, PARK, closed_claim()), FALLBACK_KEY),
+        *(scoped_to(item, FALLBACK_KEY) for item in park_evidence(WIDE_OPEN)),
+    ]
+
+    checked(run(request_doc(), fallback_park(), evidence))
+
+
+@pytest.mark.parametrize(
+    "evidence_key",
+    [
+        pytest.param({**FALLBACK_KEY, "result_id": "web-2"}, id="other-result"),
+        pytest.param({**FALLBACK_KEY, "latitude": 35.661}, id="other-coordinates"),
+    ],
+)
+def test_evidence_for_another_fallback_key_does_not_apply(evidence_key: Doc) -> None:
+    evidence = [scoped_to(item, evidence_key) for item in park_evidence(WIDE_OPEN)]
+
+    result = run(request_doc(), fallback_park(), evidence)
+
+    assert only_failure(result, ConstraintId.OPENING_ACCESS).inputs["reason"] == "unverified"
+
+
+def test_place_id_evidence_does_not_apply_to_a_fallback_stop() -> None:
+    result = run(request_doc(), fallback_park(), park_evidence(WIDE_OPEN))
+
+    failure = only_failure(result, ConstraintId.OPENING_ACCESS)
+    assert failure.inputs["reason"] == "unverified"
+    assert failure.inputs["place_id"] == FALLBACK_STOP_KEY
+
+
+def test_evidence_scoped_at_zero_applies_to_a_stop_at_negative_zero() -> None:
+    stop_at_minus_zero: Doc = {"result_id": "web-1", "latitude": -0.0, "longitude": 139.70}
+    candidate = as_fallback_stop(park_candidate(60, 30, 30), stop_at_minus_zero)
+    candidate = cast(Doc, replaced(candidate, ("stops", 0, "latitude"), -0.0))
+    scope_at_zero: Doc = {"result_id": "web-1", "latitude": 0.0, "longitude": 139.70}
+    evidence = [scoped_to(item, scope_at_zero) for item in park_evidence(WIDE_OPEN)]
+
+    checked(run(request_doc(), candidate, evidence))

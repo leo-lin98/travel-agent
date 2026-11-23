@@ -37,6 +37,8 @@ from travel_agent.contracts import (
     ValidationFeedback,
     VisitDurationClaim,
     WeatherClaim,
+    scope_key,
+    stop_key,
 )
 
 ARRIVAL_BUFFER: Final[timedelta] = timedelta(minutes=15)
@@ -86,7 +88,7 @@ class _Context:
     cutoff: datetime
     outing_date: date
     budget: Budget | None
-    place_ids: frozenset[str]
+    stop_keys: frozenset[str]
 
 
 @dataclass(frozen=True)
@@ -160,7 +162,7 @@ def _build_context(request: PlanningRequest, candidate: CandidateItinerary) -> _
         cutoff=commitment_time.astimezone(UTC) - ARRIVAL_BUFFER,
         outing_date=local_commitment.date(),
         budget=request.budget,
-        place_ids=frozenset(stop.place_id for stop in candidate.stops),
+        stop_keys=frozenset(stop_key(stop) for stop in candidate.stops),
     )
 
 
@@ -188,21 +190,21 @@ def _overlaps_outing(item: Evidence, context: _Context) -> bool:
 
 
 def _applies_to_plan(item: Evidence, context: _Context) -> bool:
-    """True for plan-wide or plan-place evidence whose window overlaps the outing."""
-    place_id = item.scope.place_id
-    return _overlaps_outing(item, context) and (place_id is None or place_id in context.place_ids)
+    """True for plan-wide or plan-stop evidence whose window overlaps the outing."""
+    key = scope_key(item.scope)
+    return _overlaps_outing(item, context) and (key is None or key in context.stop_keys)
 
 
-def _applies_to_place(item: Evidence, place_id: str, context: _Context) -> bool:
-    """True for evidence about ``place_id`` whose window overlaps the outing."""
-    return item.scope.place_id == place_id and _overlaps_outing(item, context)
+def _applies_to_place(item: Evidence, key: str, context: _Context) -> bool:
+    """True for evidence about the stop with ``stop_key`` ``key`` that overlaps the outing."""
+    return scope_key(item.scope) == key and _overlaps_outing(item, context)
 
 
 def _taxi_rate_applies(item: Evidence, claim: TaxiRateClaim, context: _Context) -> bool:
     """True for a plan-wide sourced rate whose validity dates cover the outing date (RC1)."""
     return (
         isinstance(item, SourcedFinding)
-        and item.scope.place_id is None
+        and scope_key(item.scope) is None
         and claim.valid_from <= context.outing_date <= claim.valid_until
     )
 
@@ -318,14 +320,14 @@ def _check_explicit_constraints(
 
 
 def _opening_findings(
-    evidence: tuple[Evidence, ...], place_id: str, context: _Context
+    evidence: tuple[Evidence, ...], key: str, context: _Context
 ) -> Iterator[tuple[SourceKind, OpeningAccessClaim]]:
-    """Yield (source kind, claim) for applicable sourced opening findings at a place."""
+    """Yield (source kind, claim) for applicable sourced opening findings at a stop."""
     for item in evidence:
         if (
             isinstance(item, SourcedFinding)
             and isinstance(item.claim, OpeningAccessClaim)
-            and _applies_to_place(item, place_id, context)
+            and _applies_to_place(item, key, context)
         ):
             yield item.source.kind, item.claim
 
@@ -336,12 +338,20 @@ def _opening_key(claim: OpeningAccessClaim) -> tuple[OpeningStatus, frozenset[Op
 
 
 def _decide_opening(
-    evidence: tuple[Evidence, ...], place_id: str, context: _Context
+    evidence: tuple[Evidence, ...], stop: ActivityStop, context: _Context
 ) -> OpeningAccessClaim | str:
-    """Return the deciding claim (O2 precedence) or a rejection reason code."""
-    findings = tuple(_opening_findings(evidence, place_id, context))
+    """Return the deciding claim (O2 precedence) or a rejection reason code.
+
+    A fallback-key stop has no Google Maps tier: only official findings verify it
+    (decision 2026-11-18).
+    """
+    findings = tuple(_opening_findings(evidence, stop_key(stop), context))
     official = tuple(claim for kind, claim in findings if kind in _OFFICIAL_SOURCES)
-    maps = tuple(claim for kind, claim in findings if kind == SourceKind.GOOGLE_MAPS)
+    maps = tuple(
+        claim
+        for kind, claim in findings
+        if kind == SourceKind.GOOGLE_MAPS and stop.place_id is not None
+    )
     tier = official or maps
     if not tier:
         return "unverified"
@@ -352,26 +362,24 @@ def _decide_opening(
     return tier[0]
 
 
-def _opening_failure(stop_index: int, place_id: str, reason: str) -> ConstraintFailure:
-    """Build an OPENING_ACCESS failure for one stop."""
+def _opening_failure(stop_index: int, key: str, reason: str) -> ConstraintFailure:
+    """Build an OPENING_ACCESS failure for one stop; ``place_id`` carries its ``stop_key``."""
     return _failure(
         ConstraintId.OPENING_ACCESS,
         "This stop is not verified open for the planned visit.",
-        {"stop_index": str(stop_index), "place_id": place_id, "reason": reason},
+        {"stop_index": str(stop_index), "place_id": key, "reason": reason},
     )
 
 
 # --- row 6: visit duration ---------------------------------------------------------
 
 
-def _required_minutes(
-    evidence: tuple[Evidence, ...], place_id: str, context: _Context
-) -> int | None:
+def _required_minutes(evidence: tuple[Evidence, ...], key: str, context: _Context) -> int | None:
     """Evidenced visit minutes: max of sourced findings, else max of estimates (RC6)."""
     applicable = tuple(
         item
         for item in evidence
-        if isinstance(item.claim, VisitDurationClaim) and _applies_to_place(item, place_id, context)
+        if isinstance(item.claim, VisitDurationClaim) and _applies_to_place(item, key, context)
     )
     sourced = tuple(
         item.claim.minutes
@@ -391,7 +399,8 @@ def _check_visit_duration(
     stop_index: int, stop: ActivityStop, evidence: tuple[Evidence, ...], context: _Context
 ) -> tuple[ConstraintFailure, ...]:
     """The planned visit is at least as long as the evidenced duration (O6, R10)."""
-    required = _required_minutes(evidence, stop.place_id, context)
+    key = stop_key(stop)
+    required = _required_minutes(evidence, key, context)
     if required is None:
         return (
             _failure(
@@ -400,7 +409,7 @@ def _check_visit_duration(
                 {
                     "reason": "no_visit_duration",
                     "stop_index": str(stop_index),
-                    "place_id": stop.place_id,
+                    "place_id": key,
                 },
             ),
         )
@@ -412,7 +421,7 @@ def _check_visit_duration(
             "The planned visit is shorter than the evidenced duration.",
             {
                 "stop_index": str(stop_index),
-                "place_id": stop.place_id,
+                "place_id": key,
                 "visit_minutes": str(stop.visit_minutes),
                 "required_minutes": str(required),
             },
@@ -475,7 +484,7 @@ def _schedule(
         )
         if start is None:
             return _ScheduleOutcome(
-                (_opening_failure(index, stop.place_id, "outside_open_interval"),), (), None
+                (_opening_failure(index, stop_key(stop), "outside_open_interval"),), (), None
             )
         departure = start + _minutes(stop.visit_minutes)
     earliest_arrival = departure + _minutes(legs[-1].duration_minutes)
@@ -766,9 +775,9 @@ def check_candidate(
     cited = tuple(item for item in evidence if item.evidence_id in cited_set)
 
     gap_failures = _check_same_day_gap(context)
-    decisions = tuple(_decide_opening(evidence, stop.place_id, context) for stop in candidate.stops)
+    decisions = tuple(_decide_opening(evidence, stop, context) for stop in candidate.stops)
     opening_failures = tuple(
-        _opening_failure(index, stop.place_id, decision)
+        _opening_failure(index, stop_key(stop), decision)
         for index, (stop, decision) in enumerate(zip(candidate.stops, decisions, strict=True))
         if isinstance(decision, str)
     )

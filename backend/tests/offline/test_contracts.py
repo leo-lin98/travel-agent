@@ -53,6 +53,7 @@ from travel_agent.contracts import (
     UnresolvedTopic,
     ValidatedOptions,
     ValidationFeedback,
+    stop_key,
 )
 
 type JsonPath = tuple[str | int, ...]
@@ -1131,6 +1132,7 @@ TAXI_RATE_EVIDENCE: dict[str, object] = {
     "retrieved_at": "2026-11-20T14:30:00+09:00",
     "scope": {
         "place_id": None,
+        "fallback_key": None,
         "applies_from": "2026-11-20T00:00:00+09:00",
         "applies_until": "2026-11-20T23:59:00+09:00",
     },
@@ -1380,3 +1382,208 @@ def test_recommendation_names_a_candidate_and_a_reason() -> None:
 def test_invalid_recommendation_is_rejected(document: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
         Recommendation.model_validate_json(to_json(document))
+
+
+# --- stops with no Place ID (user decision D4, 2026-11-18) -----------------------
+# Stop 0 of candidate_itinerary.json sits at (35.6764, 139.6993).
+
+FALLBACK_KEY: dict[str, object] = {"result_id": "web-1", "latitude": 35.6764, "longitude": 139.6993}
+
+
+def fallback_candidate(place_id: object, fallback_key: object) -> object:
+    """candidate_itinerary.json with stop 0's identity replaced."""
+    document = replaced(
+        read_fixture("candidate_itinerary.json"), ("stops", 0, "place_id"), place_id
+    )
+    return replaced(document, ("stops", 0, "fallback_key"), fallback_key)
+
+
+def test_stop_without_place_id_is_identified_by_a_fallback_key() -> None:
+    candidate = CandidateItinerary.model_validate_json(
+        to_json(fallback_candidate(None, FALLBACK_KEY))
+    )
+
+    stop = candidate.stops[0]
+    assert stop.place_id is None
+    assert stop.fallback_key is not None
+    assert stop.fallback_key.result_id == "web-1"
+    assert (stop.fallback_key.latitude, stop.fallback_key.longitude) == (35.6764, 139.6993)
+
+
+def test_place_id_stops_have_no_fallback_key() -> None:
+    candidate = CandidateItinerary.model_validate_json(read_text("candidate_itinerary.json"))
+
+    assert all(stop.fallback_key is None for stop in candidate.stops)
+
+
+@pytest.mark.parametrize(
+    ("place_id", "fallback_key"),
+    [
+        pytest.param("ChIJsyntheticGardenMuseum0001", FALLBACK_KEY, id="both"),
+        pytest.param(None, None, id="neither"),
+    ],
+)
+def test_stop_needs_exactly_one_identity(place_id: object, fallback_key: object) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        CandidateItinerary.model_validate_json(to_json(fallback_candidate(place_id, fallback_key)))
+
+    assert messages_at(exc_info.value, "fallback_key")
+
+
+def test_stop_requires_the_fallback_key_field() -> None:
+    document = without(read_fixture("candidate_itinerary.json"), ("stops", 0, "fallback_key"))
+
+    with pytest.raises(ValidationError) as exc_info:
+        CandidateItinerary.model_validate_json(to_json(document))
+
+    assert "fallback_key" in error_fields(exc_info.value)
+
+
+@pytest.mark.parametrize("field", ["latitude", "longitude"])
+def test_fallback_key_coordinates_must_match_the_stop(field: str) -> None:
+    moved = {**FALLBACK_KEY, field: 35.0}
+
+    with pytest.raises(ValidationError) as exc_info:
+        CandidateItinerary.model_validate_json(to_json(fallback_candidate(None, moved)))
+
+    assert messages_at(exc_info.value, "fallback_key")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("result_id", "has spaces"), ("result_id", ""), ("latitude", 91.0), ("longitude", None)],
+)
+def test_invalid_fallback_key_is_rejected(field: str, value: object) -> None:
+    with pytest.raises(ValidationError):
+        CandidateItinerary.model_validate_json(
+            to_json(fallback_candidate(None, {**FALLBACK_KEY, field: value}))
+        )
+
+
+def test_evidence_scope_may_name_a_fallback_key() -> None:
+    document = replaced(read_fixture("evidence.json"), (0, "scope", "place_id"), None)
+    document = replaced(document, (0, "scope", "fallback_key"), FALLBACK_KEY)
+
+    evidence = EVIDENCE_LIST.validate_json(to_json(document))
+
+    assert evidence[0].scope.place_id is None
+    assert evidence[0].scope.fallback_key is not None
+    assert evidence[0].scope.fallback_key.result_id == "web-1"
+
+
+def test_evidence_scope_cannot_name_both_identities() -> None:
+    document = replaced(read_fixture("evidence.json"), (0, "scope", "fallback_key"), FALLBACK_KEY)
+
+    with pytest.raises(ValidationError) as exc_info:
+        EVIDENCE_LIST.validate_json(to_json(document))
+
+    assert messages_at(exc_info.value, "fallback_key")
+
+
+def test_evidence_scope_requires_the_fallback_key_field() -> None:
+    document = without(read_fixture("evidence.json"), (0, "scope", "fallback_key"))
+
+    with pytest.raises(ValidationError) as exc_info:
+        EVIDENCE_LIST.validate_json(to_json(document))
+
+    assert "fallback_key" in error_fields(exc_info.value)
+
+
+@pytest.mark.parametrize("latitude", [0.0, -0.0])
+def test_signed_zero_coordinates_give_the_same_stop_key(latitude: float) -> None:
+    key = {"result_id": "web-1", "latitude": latitude, "longitude": 1.0}
+    document = replaced(fallback_candidate(None, key), ("stops", 0, "latitude"), latitude)
+    document = replaced(document, ("stops", 0, "longitude"), 1.0)
+
+    candidate = CandidateItinerary.model_validate_json(to_json(document))
+
+    assert stop_key(candidate.stops[0]) == "web-1@0.0,1.0"
+
+
+# --- bounded datetimes (orchestrator ruling R-B: years 2000-2100, no tz conversion) ---
+
+OUT_OF_RANGE_TIMES = [
+    pytest.param("9999-11-20T19:00:00+09:00", id="year-9999"),
+    pytest.param("0001-01-01T00:00:00+09:00", id="year-1"),
+    pytest.param("1999-12-31T23:59:59+00:00", id="just-before-2000"),
+    pytest.param("2101-01-01T00:00:00+00:00", id="just-after-2100"),
+]
+BOUNDARY_TIMES = [
+    pytest.param("2000-01-01T00:00:00+14:00", id="first-local-instant-of-2000"),
+    pytest.param("2100-12-31T23:59:59-12:00", id="last-local-second-of-2100"),
+]
+
+
+def names_the_year_range(messages: list[str]) -> bool:
+    """True when some message at the field states the supported 2000-2100 range."""
+    return any("2000" in message and "2100" in message for message in messages)
+
+
+REQUEST_TIME_PATHS = [("gap", "start_time"), ("commitment", "time")]
+EVIDENCE_TIME_PATHS = [
+    (0, "retrieved_at"),
+    (0, "scope", "applies_from"),
+    (0, "scope", "applies_until"),
+    (0, "claim", "open_intervals", 0, "opens_at"),
+    (0, "claim", "open_intervals", 0, "closes_at"),
+]
+
+
+@pytest.mark.parametrize("value", OUT_OF_RANGE_TIMES)
+@pytest.mark.parametrize("path", REQUEST_TIME_PATHS)
+def test_request_times_outside_the_supported_years_are_rejected(path: JsonPath, value: str) -> None:
+    document = replaced(read_fixture("planning_request.json"), path, value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        PlanningRequest.model_validate_json(to_json(document))
+
+    assert names_the_year_range(messages_at(exc_info.value, str(path[-1])))
+
+
+@pytest.mark.parametrize("value", OUT_OF_RANGE_TIMES)
+@pytest.mark.parametrize("path", EVIDENCE_TIME_PATHS)
+def test_evidence_times_outside_the_supported_years_are_rejected(
+    path: JsonPath, value: str
+) -> None:
+    document = replaced(read_fixture("evidence.json"), path, value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        EVIDENCE_LIST.validate_json(to_json(document))
+
+    assert names_the_year_range(messages_at(exc_info.value, str(path[-1])))
+
+
+@pytest.mark.parametrize("value", OUT_OF_RANGE_TIMES)
+def test_continuation_times_outside_the_supported_years_are_rejected(value: str) -> None:
+    path: JsonPath = ("request", "commitment", "time")
+    document = replaced(read_fixture("continuation_payload.json"), path, value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        ContinuationPayload.model_validate_json(to_json(document))
+
+    assert names_the_year_range(messages_at(exc_info.value, "time"))
+
+
+@pytest.mark.parametrize("value", BOUNDARY_TIMES)
+@pytest.mark.parametrize("path", REQUEST_TIME_PATHS)
+def test_request_times_at_the_supported_year_boundaries_are_accepted(
+    path: JsonPath, value: str
+) -> None:
+    document = replaced(read_fixture("planning_request.json"), path, value)
+
+    PlanningRequest.model_validate_json(to_json(document))
+
+
+@pytest.mark.parametrize("value", BOUNDARY_TIMES)
+def test_evidence_times_at_the_supported_year_boundaries_are_accepted(value: str) -> None:
+    document = replaced(read_fixture("evidence.json"), (0, "retrieved_at"), value)
+
+    EVIDENCE_LIST.validate_json(to_json(document))
+
+
+@pytest.mark.parametrize("value", BOUNDARY_TIMES)
+def test_continuation_times_at_the_supported_year_boundaries_are_accepted(value: str) -> None:
+    path: JsonPath = ("request", "commitment", "time")
+    document = replaced(read_fixture("continuation_payload.json"), path, value)
+
+    ContinuationPayload.model_validate_json(to_json(document))

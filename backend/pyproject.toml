@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Travel-planning chat feature backend"
 requires-python = ">=3.14"
 dependencies = [
+    "langgraph>=1,<2",
     "pydantic>=2,<3",
     "tzdata",
 ]
@@ -25,8 +26,12 @@ packages = ["src/travel_agent"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/offline"]
-addopts = "--disable-socket"
-filterwarnings = ["error"]
+addopts = "--disable-socket -p no:langsmith_plugin"
+filterwarnings = [
+    "error",
+    # langsmith (via langgraph -> langchain-core) calls a Python 3.14-deprecated asyncio API.
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:langsmith",
+]
 
 [tool.ruff]
 line-length = 100
