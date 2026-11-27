@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.4;
+}
+
+body {
+  margin: 0;
+}
+
+.chat {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.conversation {
+  min-height: 4rem;
+  padding: 0.5rem;
+  border: 1px solid #8884;
+  border-radius: 0.5rem;
+}
+
+.message {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  max-width: 80%;
+}
+
+.message[data-role="user"] {
+  margin-left: auto;
+  background: #3b82f633;
+}
+
+.message[data-role="assistant"] {
+  background: #8882;
+}
+
+.options {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.option {
+  padding: 0.75rem 1rem;
+  border: 1px solid #8884;
+  border-radius: 0.5rem;
+}
+
+.estimate {
+  font-style: italic;
+}
+
+.warning,
+.error {
+  color: #b91c1c;
+}
+
+.status {
+  min-height: 1.4em;
+  font-style: italic;
+}
+
+.composer {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.composer textarea {
+  font: inherit;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

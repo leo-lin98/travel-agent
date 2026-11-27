@@ -48,6 +48,7 @@ from travel_agent.agent import (
     ContinuationOverflowError,
     ConversationMessage,
     DatetimeObservation,
+    DeviceLocationMessage,
     EvidenceObservation,
     ExecutionLimits,
     InstructionsMessage,
@@ -784,7 +785,7 @@ USER_TZ = "Asia/Tokyo"
 
 
 def run(h: Harness, start: ContinuationPayload, user_message: str) -> TurnOutcome:
-    return run_turn(start, user_message, USER_TZ, h.dependencies, GENEROUS)
+    return run_turn(start, user_message, USER_TZ, None, h.dependencies, GENEROUS)
 
 
 def run_garden(replies: Sequence[ModelReply]) -> tuple[Harness, TurnOutcome]:
@@ -1160,6 +1161,7 @@ def test_repeated_malformed_calls_end_in_limit_termination() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 3, 5, 10, 600.0),
     )
@@ -1184,6 +1186,7 @@ def test_malformed_calls_count_toward_the_tool_budget() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 2, 5, 10, 600.0),
     )
@@ -1678,6 +1681,7 @@ def test_reserved_prefixed_evidence_id_counts_toward_the_tool_budget() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 1, 10, 60, 600.0),
     )
@@ -1813,7 +1817,7 @@ def test_web_provider_failure_is_an_execution_failure() -> None:
     )
     start = continuation([], simple_request())
 
-    outcome = run_turn(start, USER_TEXT, USER_TZ, dependencies, GENEROUS)
+    outcome = run_turn(start, USER_TEXT, USER_TZ, None, dependencies, GENEROUS)
 
     assert failure_of(outcome.result).reason == ExecutionFailureReason.PROVIDER_FAILURE
     assert [(r.tool_name, r.status) for r in outcome.tool_calls] == [
@@ -1836,7 +1840,7 @@ def test_maps_failure_is_an_execution_failure() -> None:
     )
 
     outcome = run_turn(
-        continuation([], simple_request()), USER_TEXT, USER_TZ, dependencies, GENEROUS
+        continuation([], simple_request()), USER_TEXT, USER_TZ, None, dependencies, GENEROUS
     )
 
     assert failure_of(outcome.result).reason == ExecutionFailureReason.PROVIDER_FAILURE
@@ -1854,7 +1858,7 @@ def test_model_failure_is_an_execution_failure() -> None:
     )
 
     outcome = run_turn(
-        continuation([], simple_request()), USER_TEXT, USER_TZ, dependencies, GENEROUS
+        continuation([], simple_request()), USER_TEXT, USER_TZ, None, dependencies, GENEROUS
     )
 
     assert failure_of(outcome.result).reason == ExecutionFailureReason.PROVIDER_FAILURE
@@ -2370,6 +2374,7 @@ def test_model_call_limit_ends_the_turn() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(2, 80, 10, 60, 600.0),
     )
@@ -2386,6 +2391,7 @@ def test_tool_call_limit_ends_the_turn_before_the_excess_call() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 2, 10, 60, 600.0),
     )
@@ -2407,6 +2413,7 @@ def test_candidate_limit_ends_the_turn_before_the_excess_check() -> None:
         continuation([], garden_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 80, 1, 60, 600.0),
     )
@@ -2428,6 +2435,7 @@ def test_evidence_limit_ends_the_turn() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 80, 10, 1, 600.0),
     )
@@ -2456,6 +2464,7 @@ def test_elapsed_time_limit_is_checked_before_the_next_model_call(
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 80, 10, 60, 60.0),
     )
@@ -2478,6 +2487,7 @@ def test_elapsed_time_limit_is_checked_before_each_tool_call() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 80, 10, 60, 60.0),
     )
@@ -2838,7 +2848,9 @@ def iso_now(observation: DatetimeObservation) -> str:
 
 def run_in_zone(now: datetime, user_timezone: str, replies: Sequence[ModelReply]) -> Harness:
     h = harness_at(now, replies)
-    run_turn(continuation([], simple_request()), USER_TEXT, user_timezone, h.dependencies, GENEROUS)
+    run_turn(
+        continuation([], simple_request()), USER_TEXT, user_timezone, None, h.dependencies, GENEROUS
+    )
     return h
 
 
@@ -2853,7 +2865,12 @@ def test_get_datetime_returns_the_turn_start_in_the_user_zone_even_as_the_clock_
     )
 
     run_turn(
-        continuation([], simple_request()), USER_TEXT, "Europe/London", h.dependencies, GENEROUS
+        continuation([], simple_request()),
+        USER_TEXT,
+        "Europe/London",
+        None,
+        h.dependencies,
+        GENEROUS,
     )
 
     for call_id in ("t1", "t2"):
@@ -2925,7 +2942,12 @@ def test_same_day_check_stays_in_the_commitment_zone_when_the_user_zone_differs(
     h = harness_at(datetime(2026, 11, 20, 14, 30, tzinfo=UTC), replies)
 
     run_turn(
-        continuation([], late_evening), USER_TEXT, "America/New_York", h.dependencies, GENEROUS
+        continuation([], late_evening),
+        USER_TEXT,
+        "America/New_York",
+        None,
+        h.dependencies,
+        GENEROUS,
     )
 
     assert iso_now(datetime_for(h.model, "t")) == "2026-11-20T09:30:00-05:00"
@@ -2968,6 +2990,7 @@ def test_get_datetime_counts_toward_the_tool_budget() -> None:
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 1, 10, 60, 600.0),
     )
@@ -2998,7 +3021,9 @@ def test_invalid_user_timezone_is_rejected_before_any_model_call(zone: str) -> N
     h = harness([reply(no_fit("n"))])
 
     with pytest.raises(ValidationError):
-        run_turn(continuation([], simple_request()), USER_TEXT, zone, h.dependencies, GENEROUS)
+        run_turn(
+            continuation([], simple_request()), USER_TEXT, zone, None, h.dependencies, GENEROUS
+        )
     assert h.model.received == []
 
 
@@ -3113,6 +3138,7 @@ def test_python_built_evidence_counts_toward_the_evidence_cap(research: ToolCall
         continuation([], simple_request()),
         USER_TEXT,
         USER_TZ,
+        None,
         h.dependencies,
         limits(40, 80, 10, 1, 600.0),
     )
@@ -3133,7 +3159,7 @@ def test_weather_provider_failure_is_an_execution_failure() -> None:
     )
 
     outcome = run_turn(
-        continuation([], simple_request()), USER_TEXT, USER_TZ, dependencies, GENEROUS
+        continuation([], simple_request()), USER_TEXT, USER_TZ, None, dependencies, GENEROUS
     )
 
     assert failure_of(outcome.result).reason == ExecutionFailureReason.PROVIDER_FAILURE
@@ -3154,7 +3180,7 @@ def test_route_provider_failure_is_an_execution_failure() -> None:
     )
 
     outcome = run_turn(
-        continuation([], simple_request()), USER_TEXT, USER_TZ, dependencies, GENEROUS
+        continuation([], simple_request()), USER_TEXT, USER_TZ, None, dependencies, GENEROUS
     )
 
     assert failure_of(outcome.result).reason == ExecutionFailureReason.PROVIDER_FAILURE
@@ -3363,3 +3389,58 @@ def test_replay_writes_conversation_updates_feedback_statuses_and_options(tmp_pa
     )
     assert [len(o.continuation.messages) for o in outcomes] == [2, 4, 6]
     assert revised.continuation.messages[:4] == planned.continuation.messages
+
+
+# --- Phase 3 O1: device location -------------------------------------------------------
+
+DEVICE_LOCATION = Location(
+    label="Device location", latitude=35.6595, longitude=139.7005, place_id=None
+)
+
+
+def opening_after(start: ContinuationPayload, device_location: Location | None) -> Harness:
+    """Run one clarification turn from `start` and return its harness."""
+    h = harness([reply(clarify("c", "Where should we start?", [("start_location", "Where?")]))])
+    run_turn(start, USER_TEXT, USER_TZ, device_location, h.dependencies, GENEROUS)
+    return h
+
+
+def test_no_device_location_keeps_the_phase_2_opening_history() -> None:
+    start = continuation([("user", "Hi"), ("assistant", "Hello.")], EMPTY_REQUEST)
+
+    opening = opening_after(start, None).model.received[0][0]
+
+    assert [m.kind for m in opening] == [
+        "instructions",
+        "conversation",
+        "conversation",
+        "conversation",
+        "request",
+    ]
+
+
+def test_device_location_reaches_the_model_as_user_supplied_context_only() -> None:
+    start = continuation([], EMPTY_REQUEST)
+
+    h = opening_after(start, DEVICE_LOCATION)
+
+    opening = h.model.received[0][0]
+    assert [m.kind for m in opening] == [
+        "instructions",
+        "conversation",
+        "request",
+        "device_location",
+    ]
+    supplied = [m for m in opening if isinstance(m, DeviceLocationMessage)]
+    assert [m.location for m in supplied] == [DEVICE_LOCATION]
+    requests = [m.request for m in opening if isinstance(m, RequestMessage)]
+    assert [r.gap.start_location for r in requests] == [None]
+
+
+def test_device_location_is_not_applied_to_the_request_without_the_model() -> None:
+    start = continuation([], EMPTY_REQUEST)
+    h = harness([reply(clarify("c", "Where should we start?", [("start_location", "Where?")]))])
+
+    outcome = run_turn(start, USER_TEXT, USER_TZ, DEVICE_LOCATION, h.dependencies, GENEROUS)
+
+    assert outcome.continuation.request == start.request

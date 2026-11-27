@@ -300,7 +300,7 @@ def replay_turn(
         status_sink=DiscardingStatusSink(),
     )
     outcome = run_turn(
-        continuation, turn.user_message, case.user_timezone, dependencies, case.limits
+        continuation, turn.user_message, case.user_timezone, None, dependencies, case.limits
     )
     if model.calls != len(turn.replies):
         raise ScriptMismatchError(
